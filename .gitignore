@@ -1,0 +1,32 @@
+# 构建文件
+*.iml
+/build
+/captures
+.externalNativeBuild
+.cxx
+
+# Gradle
+.gradle
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# Android Studio
+/local.properties
+/.idea/caches/build_id.xml
+/.idea/gradle.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/workspace.xml
+.DS_Store
+
+# 签名密钥
+*.jks
+*.keystore
+keystore.properties
+
+# 本地配置
+local.properties
+
+# 日志
+*.log
