@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
     
-    private const val BASE_URL = "http://127.0.0.1:8789"
+    private const val BASE_URL = "https://videoweb-jncd.onrender.com"
     
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

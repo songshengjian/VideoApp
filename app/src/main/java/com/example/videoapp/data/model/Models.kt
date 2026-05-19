@@ -1,5 +1,7 @@
 package com.example.videoapp.data.model
 
+import com.google.gson.annotations.SerializedName
+
 data class Video(
     val vod_id: Int,
     val type_id: Int,
@@ -115,7 +117,7 @@ data class VideoResponse(
 data class CategoryResponse(
     val code: Int,
     val msg: String,
-    val list: List<Category> = emptyList()
+    @SerializedName("class") val class_: List<Category> = emptyList()
 )
 
 data class User(

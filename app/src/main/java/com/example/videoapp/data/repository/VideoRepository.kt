@@ -10,7 +10,7 @@ class VideoRepository {
     
     suspend fun getHomeVideos(): Result<List<Video>> {
         return try {
-            val response = api.getHome()
+            val response = api.getHomeVideos()
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!.list)
             } else {
@@ -25,9 +25,9 @@ class VideoRepository {
         return try {
             val response = api.getCategories()
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!.list)
+                Result.success(response.body()!!.class_)
             } else {
-                Result.failure(Exception("获取分类失败"))
+                Result.failure(Exception("获取分类失败：${response.code()}"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -73,27 +73,34 @@ class VideoRepository {
         }
     }
     
-    suspend fun login(username: String, password: String): Result<User> {
+    suspend fun login(username: String, password: String): Result<com.example.videoapp.data.model.User> {
         return try {
-            val response = api.login(username = username, password = password)
-            if (response.isSuccessful && response.body() != null) {
-                // 实际项目中需要根据返回的数据构造 User 对象
-                Result.success(User(user_id = 1, user_name = username))
+            val response = api.login(username, password)
+            if (response.isSuccessful && response.body() != null && response.body()!!.code == 1) {
+                val userData = response.body()!!.data!!
+                Result.success(com.example.videoapp.data.model.User(
+                    user_id = userData.user_id,
+                    user_name = userData.user_name
+                ))
             } else {
-                Result.failure(Exception("登录失败"))
+                Result.failure(Exception(response.body()?.msg ?: "登录失败"))
             }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
     
-    suspend fun register(username: String, password: String): Result<User> {
+    suspend fun register(username: String, password: String, email: String = ""): Result<com.example.videoapp.data.model.User> {
         return try {
-            val response = api.register(username = username, password = password)
-            if (response.isSuccessful && response.body() != null) {
-                Result.success(User(user_id = 1, user_name = username))
+            val response = api.register(username, password, email)
+            if (response.isSuccessful && response.body() != null && response.body()!!.code == 1) {
+                val userData = response.body()!!.data!!
+                Result.success(com.example.videoapp.data.model.User(
+                    user_id = userData.user_id,
+                    user_name = userData.user_name
+                ))
             } else {
-                Result.failure(Exception("注册失败"))
+                Result.failure(Exception(response.body()?.msg ?: "注册失败"))
             }
         } catch (e: Exception) {
             Result.failure(e)

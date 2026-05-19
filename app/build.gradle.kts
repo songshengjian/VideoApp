@@ -73,9 +73,12 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     kapt("com.github.bumptech.glide:compiler:4.16.0")
     
-    // ExoPlayer for video playback
+    // ExoPlayer for video playback with HLS support
     implementation("androidx.media3:media3-exoplayer:1.2.0")
     implementation("androidx.media3:media3-ui:1.2.0")
+    implementation("androidx.media3:media3-exoplayer-hls:1.2.0")
+    implementation("androidx.media3:media3-exoplayer-dash:1.2.0")
+    implementation("androidx.media3:media3-exoplayer-rtsp:1.2.0")
     
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

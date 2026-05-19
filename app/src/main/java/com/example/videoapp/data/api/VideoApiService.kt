@@ -6,57 +6,58 @@ import retrofit2.http.*
 
 interface VideoApiService {
     
-    @GET("/")
-    suspend fun getHome(
-        @Header("ac") ac: String = "detail"
+    @GET("/api/video/list")
+    suspend fun getHomeVideos(
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
     ): Response<VideoResponse>
     
-    @GET("")
-    suspend fun getCategories(
-        @Query("ac") ac: String = "type"
-    ): Response<CategoryResponse>
+    @GET("/api/video/type")
+    suspend fun getCategories(): Response<CategoryResponse>
     
-    @GET("")
+    @GET("/api/video/list")
     suspend fun getCategoryVideos(
-        @Query("ac") ac: String = "detail",
-        @Query("t") typeId: Int,
-        @Query("pg") page: Int = 1,
-        @Query("h") home: String = "1"
+        @Query("type_id") typeId: Int,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
     ): Response<VideoResponse>
     
-    @GET("")
+    @GET("/api/video/search")
     suspend fun searchVideos(
-        @Query("ac") ac: String = "detail",
         @Query("wd") keyword: String,
-        @Query("pg") page: Int = 1
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
     ): Response<VideoResponse>
     
-    @GET("")
+    @GET("/api/video/detail")
     suspend fun getVideoDetail(
-        @Query("ac") ac: String = "detail",
         @Query("ids") ids: String
     ): Response<VideoResponse>
     
-    @POST("/index/video")
-    suspend fun getPlayUrl(
-        @FormUrlEncoded
-        @Field("ids") ids: String,
-        @Field("channel_url") channelUrl: String = ""
-    ): Response<VideoResponse>
-    
-    @POST("/admin/login")
+    @POST("/api/user/login")
     @FormUrlEncoded
     suspend fun login(
         @Field("user_name") username: String,
         @Field("user_pwd") password: String
-    ): Response<VideoResponse>
+    ): Response<LoginResponse>
     
-    @POST("/index/user/reg")
+    @POST("/api/user/register")
     @FormUrlEncoded
     suspend fun register(
         @Field("user_name") username: String,
         @Field("user_pwd") password: String,
-        @Field("user_email") email: String = "",
-        @Field("user_phone") phone: String = ""
-    ): Response<VideoResponse>
+        @Field("user_email") email: String = ""
+    ): Response<LoginResponse>
 }
+
+data class LoginResponse(
+    val code: Int,
+    val msg: String,
+    val data: LoginData?
+)
+
+data class LoginData(
+    val user_id: Int,
+    val user_name: String,
+    val token: String
+)

@@ -51,6 +51,12 @@ class CategoriesFragment : Fragment() {
         viewModel.isLoading.observe(viewLifecycleOwner, Observer { isLoading ->
             binding.progressBarCategories.visibility = if (isLoading) View.VISIBLE else View.GONE
         })
+        
+        viewModel.error.observe(viewLifecycleOwner, Observer { error ->
+            error?.let {
+                android.widget.Toast.makeText(requireContext(), "加载失败：$it", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        })
     }
     
     override fun onDestroyView() {

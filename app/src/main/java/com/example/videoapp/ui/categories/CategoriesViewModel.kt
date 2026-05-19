@@ -18,16 +18,20 @@ class CategoriesViewModel : ViewModel() {
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
     
+    private val _error = MutableLiveData<String?>()
+    val error: LiveData<String?> = _error
+    
     fun loadCategories() {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             
             repository.getCategories()
                 .onSuccess { categories ->
                     _categories.value = categories
                 }
                 .onFailure { exception ->
-                    // 处理错误
+                    _error.value = exception.message
                 }
             
             _isLoading.value = false
