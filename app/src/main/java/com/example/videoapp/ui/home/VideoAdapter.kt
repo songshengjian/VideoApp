@@ -1,18 +1,23 @@
 package com.example.videoapp.ui.home
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.videoapp.R
 import com.example.videoapp.data.model.Video
 import com.example.videoapp.databinding.ItemVideoBinding
+import com.example.videoapp.ui.player.VideoPlayerActivity
 
 class VideoAdapter(
     private val onItemClick: (Video) -> Unit
 ) : RecyclerView.Adapter<VideoAdapter.VideoViewHolder>() {
     
     private var videos: List<Video> = emptyList()
+    private val TAG = "VideoAdapter"
     
     fun submitList(newVideos: List<Video>) {
         val diffResult = DiffUtil.calculateDiff(VideoDiffCallback(videos, newVideos))
@@ -38,6 +43,7 @@ class VideoAdapter(
     class VideoViewHolder(
         private val binding: ItemVideoBinding
     ) : RecyclerView.ViewHolder(binding.root) {
+        private val TAG = "VideoViewHolder"
         
         fun bind(video: Video, onItemClick: (Video) -> Unit) {
             binding.textViewVideoTitle.text = video.vod_name
@@ -45,8 +51,8 @@ class VideoAdapter(
             
             Glide.with(binding.root.context)
                 .load(video.vod_pic)
-                .placeholder(android.R.color.darker_gray)
-                .error(android.R.color.darker_gray)
+                .placeholder(R.drawable.placeholder_image)
+                .error(R.drawable.placeholder_image)
                 .into(binding.imageViewVideoCover)
             
             binding.root.setOnClickListener {

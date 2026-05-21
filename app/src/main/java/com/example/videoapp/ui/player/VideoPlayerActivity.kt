@@ -2,15 +2,24 @@ package com.example.videoapp.ui.player
 
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
+import android.widget.GridLayout
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.videoapp.R
 import com.example.videoapp.data.api.ApiClient
 import com.example.videoapp.databinding.ActivityVideoPlayerBinding
 import kotlinx.coroutines.CoroutineScope
@@ -23,28 +32,43 @@ class VideoPlayerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityVideoPlayerBinding
     private var exoPlayer: ExoPlayer? = null
     private val TAG = "VideoPlayerActivity"
+    private val handler = Handler(Looper.getMainLooper())
+    private val hideRunnable = Runnable { hideControlBars() }
+    private val HIDE_DELAY = 3000L
     
     private var videoId: String = ""
     private var currentVideoUrl: String = ""
     private var currentEpisodeIndex: Int = 0
     private var playSources: List<PlaySource> = emptyList()
     private var currentSourceIndex: Int = 0
+    private var isControlsVisible = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         try {
-            Log.d(TAG, "Activity onCreate")
             binding = ActivityVideoPlayerBinding.inflate(layoutInflater)
             setContentView(binding.root)
+            
+            // 处理返回键逻辑
+            onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    when {
+                        // 优先关闭弹窗
+                        binding.popupSource.visibility == View.VISIBLE -> hidePopup(binding.popupSource)
+                        binding.popupEpisodes.visibility == View.VISIBLE -> hidePopup(binding.popupEpisodes)
+                        binding.popupSpeed.visibility == View.VISIBLE -> hidePopup(binding.popupSpeed)
+                        // 然后隐藏控制栏
+                        isControlsVisible -> hideControlBars()
+                        // 最后确认退出
+                        else -> showExitConfirmDialog()
+                    }
+                }
+            })
             
             videoId = intent.getStringExtra(EXTRA_VIDEO_ID) ?: ""
             val videoTitle = intent.getStringExtra(EXTRA_VIDEO_TITLE) ?: "未知视频"
             currentVideoUrl = intent.getStringExtra(EXTRA_VIDEO_URL) ?: ""
-            
-            Log.d(TAG, "Received video ID: $videoId")
-            Log.d(TAG, "Received video title: $videoTitle")
-            Log.d(TAG, "Received video URL: ${currentVideoUrl.take(100)}...")
             
             binding.textViewVideoTitle.text = videoTitle
             
@@ -62,99 +86,158 @@ class VideoPlayerActivity : AppCompatActivity() {
     }
     
     private fun setupUI() {
-        binding.buttonSelectSource.setOnClickListener { showSourceSelector() }
-        binding.buttonSelectEpisode.setOnClickListener { showEpisodeSelector() }
-        binding.buttonPlaybackSpeed.setOnClickListener { showPlaybackSpeedSelector() }
-    }
-    
-    private fun showPlaybackSpeedSelector() {
-        val speeds = arrayOf("0.5x", "0.75x", "1.0x", "1.25x", "1.5x", "1.75x", "2.0x")
-        val currentSpeed = exoPlayer?.playbackParameters?.speed ?: 1.0f
-        val currentIndex = speeds.indexOf("${currentSpeed}x")
-            .takeIf { it >= 0 } ?: speeds.indexOf("1.0x")
+        // 返回按钮（直接触发退出确认）
+        binding.buttonBack.setOnClickListener {
+            showExitConfirmDialog()
+        }
         
-        AlertDialog.Builder(this)
-            .setTitle("播放速度")
-            .setSingleChoiceItems(speeds, currentIndex) { dialog, which ->
-                val newSpeed = when (which) {
-                    0 -> 0.5f
-                    1 -> 0.75f
-                    2 -> 1.0f
-                    3 -> 1.25f
-                    4 -> 1.5f
-                    5 -> 1.75f
-                    6 -> 2.0f
-                    else -> 1.0f
-                }
-                exoPlayer?.setPlaybackSpeed(newSpeed)
-                binding.buttonPlaybackSpeed.text = "${newSpeed}x"
-                Toast.makeText(this, "播放速度：${newSpeed}x", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
+        // 点击屏幕切换控制栏
+        binding.playerView.setOnClickListener {
+            if (isControlsVisible) {
+                hideControlBars()
+            } else {
+                showControlBars()
             }
-            .setNegativeButton("取消", null)
-            .show()
+        }
+        
+        // 播放源选择
+        binding.buttonSelectSource.setOnClickListener { showSourcePopup() }
+        
+        // 选集
+        binding.buttonSelectEpisode.setOnClickListener { showEpisodePopup() }
+        
+        // 倍速
+        binding.buttonPlaybackSpeed.setOnClickListener { showSpeedPopup() }
+        
+        // 关闭按钮
+        binding.buttonCloseSource.setOnClickListener { hidePopup(binding.popupSource) }
+        binding.buttonCloseEpisode.setOnClickListener { hidePopup(binding.popupEpisodes) }
+        binding.buttonCloseSpeed.setOnClickListener { hidePopup(binding.popupSpeed) }
+        
+        // 倍速网格点击
+        setupSpeedGrid()
     }
     
-    private fun showSourceSelector() {
+    private fun showControlBars() {
+        binding.layoutTopBar.visibility = View.VISIBLE
+        binding.layoutBottomBar.visibility = View.VISIBLE
+        isControlsVisible = true
+        handler.removeCallbacks(hideRunnable)
+        handler.postDelayed(hideRunnable, HIDE_DELAY)
+    }
+    
+    private fun hideControlBars() {
+        if (binding.popupSource.visibility != View.VISIBLE &&
+            binding.popupEpisodes.visibility != View.VISIBLE &&
+            binding.popupSpeed.visibility != View.VISIBLE) {
+            binding.layoutTopBar.visibility = View.GONE
+            binding.layoutBottomBar.visibility = View.GONE
+            isControlsVisible = false
+        }
+    }
+    
+    private fun showSourcePopup() {
         if (playSources.isEmpty()) {
             Toast.makeText(this, "暂无其他播放源", Toast.LENGTH_SHORT).show()
             return
         }
         
-        val sourceNames = playSources.map { it.name }.toTypedArray()
-        AlertDialog.Builder(this)
-            .setTitle("选择播放源")
-            .setItems(sourceNames) { dialog, which ->
-                currentSourceIndex = which
-                currentEpisodeIndex = 0
-                val source = playSources[which]
-                if (source.episodes.isNotEmpty()) {
-                    playVideo(source.episodes[0].url)
-                    updateInfoText()
-                    Toast.makeText(this, "已切换到 ${source.name}", Toast.LENGTH_SHORT).show()
-                }
-                dialog.dismiss()
+        binding.popupSource.visibility = View.VISIBLE
+        val recyclerView = binding.recyclerViewSources
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = SourceAdapter(playSources, currentSourceIndex) { sourceIndex ->
+            currentSourceIndex = sourceIndex
+            currentEpisodeIndex = 0
+            val source = playSources[sourceIndex]
+            if (source.episodes.isNotEmpty()) {
+                playVideo(source.episodes[0].url)
+                updateEpisodeInfo()
             }
-            .setNegativeButton("取消", null)
-            .show()
+            hidePopup(binding.popupSource)
+            Toast.makeText(this, "已切换到 ${source.name}", Toast.LENGTH_SHORT).show()
+        }
     }
     
-    private fun showEpisodeSelector() {
+    private fun showEpisodePopup() {
         if (playSources.isEmpty() || currentSourceIndex >= playSources.size) {
             Toast.makeText(this, "暂无剧集列表", Toast.LENGTH_SHORT).show()
             return
         }
         
-        val source = playSources[currentSourceIndex]
-        val episodeNames = source.episodes.map { it.name }.toTypedArray()
-        
-        AlertDialog.Builder(this)
-            .setTitle("选择剧集 - ${source.name}")
-            .setItems(episodeNames) { dialog, which ->
-                currentEpisodeIndex = which
-                val episode = source.episodes[which]
-                playVideo(episode.url)
-                updateInfoText()
-                Toast.makeText(this, "播放：${episode.name}", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-            }
-            .setNegativeButton("取消", null)
-            .show()
+        binding.popupEpisodes.visibility = View.VISIBLE
+        val recyclerView = binding.recyclerViewEpisodes
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = EpisodeAdapter(playSources[currentSourceIndex].episodes, currentEpisodeIndex) { episodeIndex ->
+            currentEpisodeIndex = episodeIndex
+            val episode = playSources[currentSourceIndex].episodes[episodeIndex]
+            playVideo(episode.url)
+            updateEpisodeInfo()
+            hidePopup(binding.popupEpisodes)
+        }
     }
     
-    private fun updateInfoText() {
+    private fun showSpeedPopup() {
+        binding.popupSpeed.visibility = View.VISIBLE
+        val currentSpeed = exoPlayer?.playbackParameters?.speed ?: 1.0f
+        highlightCurrentSpeed(currentSpeed)
+    }
+    
+    private fun highlightCurrentSpeed(speed: Float) {
+        val speedMap = mapOf(
+            0.5f to binding.speed05,
+            0.75f to binding.speed075,
+            1.0f to binding.speed10,
+            1.25f to binding.speed125,
+            1.5f to binding.speed15,
+            2.0f to binding.speed20
+        )
+        
+        speedMap.forEach { (s, textView) ->
+            if (s == speed) {
+                textView.setTextColor(ContextCompat.getColor(this, android.R.color.holo_blue_light))
+                textView.textSize = 18f
+            } else {
+                textView.setTextColor(getColor(android.R.color.white))
+                textView.textSize = 16f
+            }
+        }
+    }
+    
+    private fun setupSpeedGrid() {
+        val speeds = mapOf(
+            binding.speed05 to 0.5f,
+            binding.speed075 to 0.75f,
+            binding.speed10 to 1.0f,
+            binding.speed125 to 1.25f,
+            binding.speed15 to 1.5f,
+            binding.speed20 to 2.0f
+        )
+        
+        speeds.forEach { (textView, speed) ->
+            textView.setOnClickListener {
+                exoPlayer?.setPlaybackSpeed(speed)
+                binding.buttonPlaybackSpeed.text = "${speed}x"
+                Toast.makeText(this, "播放速度：${speed}x", Toast.LENGTH_SHORT).show()
+                hidePopup(binding.popupSpeed)
+            }
+        }
+    }
+    
+    private fun hidePopup(popup: View) {
+        popup.visibility = View.GONE
+        showControlBars()
+    }
+    
+    private fun updateEpisodeInfo() {
         if (playSources.isNotEmpty() && currentSourceIndex < playSources.size) {
             val source = playSources[currentSourceIndex]
             val episodeCount = source.episodes.size
-            val currentEpisode = if (currentEpisodeIndex < episodeCount) {
-                source.episodes[currentEpisodeIndex].name
-            } else {
-                "未知"
+            if (currentEpisodeIndex < episodeCount) {
+                val currentEpisode = source.episodes[currentEpisodeIndex]
+                binding.textViewCurrentEpisode.text = "${currentEpisode.name} (${currentEpisodeIndex + 1}/$episodeCount)"
+                binding.buttonSelectSource.visibility = View.VISIBLE
+                binding.buttonSelectEpisode.visibility = View.VISIBLE
             }
-            binding.textViewCurrentInfo.text = "${source.name} - $currentEpisode (${currentEpisodeIndex + 1}/$episodeCount)"
-            binding.textViewCurrentInfo.visibility = View.VISIBLE
-            binding.buttonSelectSource.visibility = View.VISIBLE
-            binding.buttonSelectEpisode.visibility = View.VISIBLE
         }
     }
     
@@ -168,7 +251,7 @@ class VideoPlayerActivity : AppCompatActivity() {
                         if (video != null) {
                             playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
                             if (playSources.isNotEmpty()) {
-                                updateInfoText()
+                                updateEpisodeInfo()
                             }
                         }
                     }
@@ -240,11 +323,8 @@ class VideoPlayerActivity : AppCompatActivity() {
                     when (playbackState) {
                         Player.STATE_READY -> {
                             Log.d(TAG, "Playback ready")
-                            // 显示控制按钮
-                            binding.buttonSelectSource.visibility = View.VISIBLE
-                            binding.buttonSelectEpisode.visibility = View.VISIBLE
-                            binding.buttonPlaybackSpeed.visibility = View.VISIBLE
-                            updateInfoText()
+                            showControlBars()
+                            updateEpisodeInfo()
                         }
                         Player.STATE_ENDED -> playNextEpisode()
                         Player.STATE_BUFFERING -> Log.d(TAG, "Buffering")
@@ -275,10 +355,19 @@ class VideoPlayerActivity : AppCompatActivity() {
                 currentEpisodeIndex++
                 val nextEpisode = source.episodes[currentEpisodeIndex]
                 playVideo(nextEpisode.url)
-                updateInfoText()
+                updateEpisodeInfo()
                 Toast.makeText(this, "正在播放：${nextEpisode.name}", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+    
+    private fun showExitConfirmDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("退出播放")
+            .setMessage("是否退出当前视频？")
+            .setPositiveButton("退出") { _, _ -> finish() }
+            .setNegativeButton("继续观看", null)
+            .show()
     }
     
     override fun onDestroy() {

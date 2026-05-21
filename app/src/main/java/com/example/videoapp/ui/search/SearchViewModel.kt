@@ -18,16 +18,20 @@ class SearchViewModel : ViewModel() {
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
     
+    private val _error = MutableLiveData<String?>()
+    val error: LiveData<String?> = _error
+    
     fun searchVideos(keyword: String) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             
             repository.searchVideos(keyword = keyword)
                 .onSuccess { videos ->
                     _videos.value = videos
                 }
                 .onFailure { exception ->
-                    // 处理错误
+                    _error.value = exception.message
                 }
             
             _isLoading.value = false

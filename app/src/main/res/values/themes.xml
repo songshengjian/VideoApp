@@ -11,7 +11,7 @@
         <item name="android:windowContentOverlay">@null</item>
     </style>
     
-    <color name="primary">#FF5722</color>
-    <color name="primary_dark">#E64A19</color>
-    <color name="accent">#FF5722</color>
+    <color name="primary">#D42B41</color>
+    <color name="primary_dark">#B02435</color>
+    <color name="accent">#E63950</color>
 </resources>
