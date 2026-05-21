@@ -42,12 +42,15 @@ class CategoriesViewModel : ViewModel() {
         }
     }
     
-    fun loadCategoryVideos(typeId: Int) {
+    fun loadCategoryVideos(typeId: Int, childTypeId: Int = 0) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             
-            repository.getCategoryVideos(typeId = typeId, page = 1)
+            // 如果 childTypeId 为 0，使用大类的 typeId
+            val actualTypeId = if (childTypeId > 0) childTypeId else typeId
+            
+            repository.getCategoryVideos(typeId = actualTypeId, page = 1)
                 .onSuccess { videos ->
                     _videos.value = videos
                 }

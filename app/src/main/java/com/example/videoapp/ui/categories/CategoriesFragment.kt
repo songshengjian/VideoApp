@@ -5,12 +5,15 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.videoapp.R
+import com.example.videoapp.data.model.Category
 import com.example.videoapp.databinding.FragmentCategoriesBinding
 import com.example.videoapp.ui.home.VideoAdapter
 import com.example.videoapp.ui.player.VideoPlayerActivity
@@ -24,6 +27,16 @@ class CategoriesFragment : Fragment() {
     private val viewModel: CategoriesViewModel by viewModels()
     
     private var unifiedTypeId: Int = 0
+    private var currentChildTypeId: Int = 0
+    
+    // 大类对应的子类列表
+    private val childCategories = mapOf(
+        1 to listOf(Pair(0, "全部"), Pair(101, "动作片"), Pair(102, "喜剧片"), Pair(103, "爱情片"), Pair(104, "科幻片"), Pair(105, "恐怖片"), Pair(106, "剧情片"), Pair(107, "战争片"), Pair(108, "纪录片")),
+        2 to listOf(Pair(0, "全部"), Pair(201, "国产剧"), Pair(202, "港台剧"), Pair(203, "日韩剧"), Pair(204, "欧美剧"), Pair(205, "其他剧")),
+        3 to listOf(Pair(0, "全部"), Pair(301, "大陆综艺"), Pair(302, "港台综艺"), Pair(303, "日韩综艺"), Pair(304, "欧美综艺")),
+        4 to listOf(Pair(0, "全部"), Pair(401, "国产动漫"), Pair(402, "日韩动漫"), Pair(403, "欧美动漫"), Pair(404, "港台动漫"), Pair(405, "其他动漫")),
+        5 to listOf(Pair(0, "全部"), Pair(501, "古装短剧"), Pair(502, "现代短剧"), Pair(503, "都市短剧"))
+    )
     
     companion object {
         private const val ARG_TYPE_ID = "type_id"
@@ -41,6 +54,7 @@ class CategoriesFragment : Fragment() {
         super.onCreate(savedInstanceState)
         arguments?.let {
             unifiedTypeId = it.getInt(ARG_TYPE_ID, 0)
+            currentChildTypeId = 0
         }
     }
     
@@ -59,13 +73,12 @@ class CategoriesFragment : Fragment() {
         Log.d(TAG, "Fragment onViewCreated, typeId: $unifiedTypeId")
         
         setupRecyclerView()
+        setupChildNavigation()
         observeViewModel()
         
-        // 根据 typeId 加载对应分类视频
+        // 加载该大类的子类视频（默认加载"全部"）
         if (unifiedTypeId > 0) {
-            viewModel.loadCategoryVideos(unifiedTypeId)
-        } else {
-            viewModel.loadCategories()
+            viewModel.loadCategoryVideos(unifiedTypeId, 0)
         }
     }
     
@@ -94,6 +107,47 @@ class CategoriesFragment : Fragment() {
                 Log.e(TAG, "Error opening video player", e)
                 Toast.makeText(requireContext(), "打开播放器失败：${e.message}", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+    
+    private fun setupChildNavigation() {
+        val container = binding.childNavContainer
+        container.removeAllViews()
+        
+        val children = childCategories[unifiedTypeId] ?: listOf(Pair(0, "全部"))
+        
+        children.forEachIndexed { index, pair ->
+            val (childTypeId, name) = pair
+            val itemView = LayoutInflater.from(requireContext()).inflate(
+                R.layout.item_nav_category, container, false
+            )
+            val textView = itemView.findViewById<TextView>(R.id.text_view_nav_item)
+            textView.text = name
+            
+            // 设置默认选中"全部"
+            if (index == 0) {
+                itemView.isSelected = true
+                textView.setTextColor(resources.getColor(android.R.color.white, requireContext().theme))
+            }
+            
+            itemView.setOnClickListener {
+                // 更新选中状态
+                for (i in 0 until container.childCount) {
+                    val child = container.getChildAt(i)
+                    child.isSelected = false
+                    child.findViewById<TextView>(R.id.text_view_nav_item).setTextColor(
+                        resources.getColor(R.color.primary, requireContext().theme)
+                    )
+                }
+                itemView.isSelected = true
+                textView.setTextColor(resources.getColor(android.R.color.white, requireContext().theme))
+                
+                // 加载对应子类视频
+                currentChildTypeId = childTypeId
+                viewModel.loadCategoryVideos(unifiedTypeId, childTypeId)
+            }
+            
+            container.addView(itemView)
         }
     }
     

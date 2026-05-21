@@ -28,6 +28,8 @@ id button_playback_speed
 id button_register
 id button_select_episode
 id button_select_source
+id child_nav_container
+id child_nav_scroll
 id edit_text_confirm_password
 id edit_text_email
 id edit_text_password

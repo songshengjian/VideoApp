@@ -4,7 +4,8 @@ package com.example.videoapp.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,7 +19,13 @@ import java.lang.String;
 
 public final class FragmentCategoriesBinding implements ViewBinding {
   @NonNull
-  private final FrameLayout rootView;
+  private final LinearLayout rootView;
+
+  @NonNull
+  public final LinearLayout childNavContainer;
+
+  @NonNull
+  public final HorizontalScrollView childNavScroll;
 
   @NonNull
   public final ProgressBar progressBarCategories;
@@ -26,16 +33,19 @@ public final class FragmentCategoriesBinding implements ViewBinding {
   @NonNull
   public final RecyclerView recyclerViewCategories;
 
-  private FragmentCategoriesBinding(@NonNull FrameLayout rootView,
+  private FragmentCategoriesBinding(@NonNull LinearLayout rootView,
+      @NonNull LinearLayout childNavContainer, @NonNull HorizontalScrollView childNavScroll,
       @NonNull ProgressBar progressBarCategories, @NonNull RecyclerView recyclerViewCategories) {
     this.rootView = rootView;
+    this.childNavContainer = childNavContainer;
+    this.childNavScroll = childNavScroll;
     this.progressBarCategories = progressBarCategories;
     this.recyclerViewCategories = recyclerViewCategories;
   }
 
   @Override
   @NonNull
-  public FrameLayout getRoot() {
+  public LinearLayout getRoot() {
     return rootView;
   }
 
@@ -60,6 +70,18 @@ public final class FragmentCategoriesBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.child_nav_container;
+      LinearLayout childNavContainer = ViewBindings.findChildViewById(rootView, id);
+      if (childNavContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.child_nav_scroll;
+      HorizontalScrollView childNavScroll = ViewBindings.findChildViewById(rootView, id);
+      if (childNavScroll == null) {
+        break missingId;
+      }
+
       id = R.id.progress_bar_categories;
       ProgressBar progressBarCategories = ViewBindings.findChildViewById(rootView, id);
       if (progressBarCategories == null) {
@@ -72,8 +94,8 @@ public final class FragmentCategoriesBinding implements ViewBinding {
         break missingId;
       }
 
-      return new FragmentCategoriesBinding((FrameLayout) rootView, progressBarCategories,
-          recyclerViewCategories);
+      return new FragmentCategoriesBinding((LinearLayout) rootView, childNavContainer,
+          childNavScroll, progressBarCategories, recyclerViewCategories);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));
