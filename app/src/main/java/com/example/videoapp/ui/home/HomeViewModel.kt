@@ -12,8 +12,8 @@ class HomeViewModel : ViewModel() {
     
     private val repository = VideoRepository()
     
-    private val _videos = MutableLiveData<List<Video>>()
-    val videos: LiveData<List<Video>> = _videos
+    private val _sections = MutableLiveData<List<HomeSection>>()
+    val sections: LiveData<List<HomeSection>> = _sections
     
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
@@ -26,13 +26,41 @@ class HomeViewModel : ViewModel() {
             _isLoading.value = true
             _error.value = null
             
-            repository.getHomeVideos()
-                .onSuccess { videos ->
-                    _videos.value = videos
+            val sectionList = mutableListOf<HomeSection>()
+            
+            // 定义分类：typeId 和显示名称
+            val categories = listOf(
+                Pair(1, "热播电影"),
+                Pair(2, "热播连续剧"),
+                Pair(3, "热播综艺"),
+                Pair(4, "热播动漫"),
+                Pair(5, "热播短剧")
+            )
+            
+            var hasError = false
+            var errorMessage = ""
+            
+            categories.forEach { (typeId, name) ->
+                try {
+                    val result = repository.getCategoryVideos(typeId = typeId, page = 1)
+                    result.onSuccess { videos ->
+                        if (videos.isNotEmpty()) {
+                            // 每个分类取最新6个
+                            sectionList.add(HomeSection(name, typeId, videos.take(6)))
+                        }
+                    }.onFailure { exception ->
+                        // 单个分类失败不影响其他分类
+                    }
+                } catch (e: Exception) {
+                    // 忽略单个分类错误
                 }
-                .onFailure { exception ->
-                    _error.value = exception.message
-                }
+            }
+            
+            if (sectionList.isEmpty()) {
+                _error.value = "加载首页数据失败"
+            } else {
+                _sections.value = sectionList
+            }
             
             _isLoading.value = false
         }

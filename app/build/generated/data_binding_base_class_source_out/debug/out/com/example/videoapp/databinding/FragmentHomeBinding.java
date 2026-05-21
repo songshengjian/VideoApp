@@ -5,10 +5,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.example.videoapp.R;
@@ -21,16 +21,16 @@ public final class FragmentHomeBinding implements ViewBinding {
   private final FrameLayout rootView;
 
   @NonNull
-  public final ProgressBar progressBarHome;
+  public final LinearLayout homeSectionsContainer;
 
   @NonNull
-  public final RecyclerView recyclerViewHome;
+  public final ProgressBar progressBarHome;
 
-  private FragmentHomeBinding(@NonNull FrameLayout rootView, @NonNull ProgressBar progressBarHome,
-      @NonNull RecyclerView recyclerViewHome) {
+  private FragmentHomeBinding(@NonNull FrameLayout rootView,
+      @NonNull LinearLayout homeSectionsContainer, @NonNull ProgressBar progressBarHome) {
     this.rootView = rootView;
+    this.homeSectionsContainer = homeSectionsContainer;
     this.progressBarHome = progressBarHome;
-    this.recyclerViewHome = recyclerViewHome;
   }
 
   @Override
@@ -60,19 +60,20 @@ public final class FragmentHomeBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.home_sections_container;
+      LinearLayout homeSectionsContainer = ViewBindings.findChildViewById(rootView, id);
+      if (homeSectionsContainer == null) {
+        break missingId;
+      }
+
       id = R.id.progress_bar_home;
       ProgressBar progressBarHome = ViewBindings.findChildViewById(rootView, id);
       if (progressBarHome == null) {
         break missingId;
       }
 
-      id = R.id.recycler_view_home;
-      RecyclerView recyclerViewHome = ViewBindings.findChildViewById(rootView, id);
-      if (recyclerViewHome == null) {
-        break missingId;
-      }
-
-      return new FragmentHomeBinding((FrameLayout) rootView, progressBarHome, recyclerViewHome);
+      return new FragmentHomeBinding((FrameLayout) rootView, homeSectionsContainer,
+          progressBarHome);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

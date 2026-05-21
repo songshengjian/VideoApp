@@ -3589,6 +3589,7 @@ id hide_ime_id
 id hideable
 id home
 id homeAsUp
+id home_sections_container
 id honorRequest
 id horizontal_only
 id icon
@@ -3765,8 +3766,8 @@ id ratio
 id rectangles
 id recycler_view_categories
 id recycler_view_episodes
-id recycler_view_home
 id recycler_view_search
+id recycler_view_section_videos
 id recycler_view_sources
 id report_drawn
 id reverseSawtooth
@@ -3883,6 +3884,7 @@ id text_view_current_episode
 id text_view_episode_name
 id text_view_logo
 id text_view_nav_item
+id text_view_section_title
 id text_view_source_name
 id text_view_title
 id text_view_username
@@ -4094,6 +4096,8 @@ layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout item_category
 layout item_episode
+layout item_home_section
+layout item_home_video
 layout item_nav_category
 layout item_source
 layout item_video

@@ -9,8 +9,6 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.GridLayoutManager
-import com.example.videoapp.R
 import com.example.videoapp.databinding.FragmentHomeBinding
 
 class HomeFragment : Fragment() {
@@ -20,6 +18,7 @@ class HomeFragment : Fragment() {
     private val TAG = "HomeFragment"
     
     private val viewModel: HomeViewModel by viewModels()
+    private lateinit var sectionAdapter: HomeSectionAdapter
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,91 +47,34 @@ class HomeFragment : Fragment() {
         Log.d(TAG, "Fragment onViewCreated")
         
         try {
-            setupRecyclerView()
-            Log.d(TAG, "RecyclerView setup complete")
+            setupSectionAdapter()
+            Log.d(TAG, "Section adapter setup complete")
             
             observeViewModel()
             Log.d(TAG, "ViewModel observation setup complete")
             
             viewModel.loadHomeVideos()
-            Log.d(TAG, "Loading videos")
+            Log.d(TAG, "Loading home videos")
         } catch (e: Exception) {
             Log.e(TAG, "Error in onViewCreated", e)
             Toast.makeText(requireContext(), "加载失败：${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     
-    private fun setupRecyclerView() {
-        Log.d(TAG, "Setting up RecyclerView")
-        binding.recyclerViewHome.layoutManager = GridLayoutManager(requireContext(), 2)
-        binding.recyclerViewHome.adapter = VideoAdapter { video ->
-            try {
-                Log.d(TAG, "Video clicked: ${video.vod_name}, vod_id: ${video.vod_id}")
-                
-                // 获取播放 URL
-                val playUrl = parseFirstEpisodeUrl(video.vod_play_url)
-                Log.d(TAG, "Parsed play URL: $playUrl")
-                
-                if (playUrl.isEmpty()) {
-                    Toast.makeText(requireContext(), "该视频暂无播放资源", Toast.LENGTH_SHORT).show()
-                    return@VideoAdapter
-                }
-                
-                // 跳转到视频播放页面
-                val intent = android.content.Intent(requireContext(), com.example.videoapp.ui.player.VideoPlayerActivity::class.java)
-                intent.putExtra(com.example.videoapp.ui.player.VideoPlayerActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
-                intent.putExtra(com.example.videoapp.ui.player.VideoPlayerActivity.EXTRA_VIDEO_TITLE, video.vod_name)
-                // 先传递第一集的 URL 用于立即播放
-                val firstUrl = parseFirstEpisodeUrl(video.vod_play_url)
-                intent.putExtra(com.example.videoapp.ui.player.VideoPlayerActivity.EXTRA_VIDEO_URL, firstUrl)
-                Log.d(TAG, "Starting VideoPlayerActivity with URL: $firstUrl")
-                startActivity(intent)
-            } catch (e: Exception) {
-                Log.e(TAG, "Error opening video player", e)
-                Toast.makeText(requireContext(), "打开播放器失败：${e.message}", Toast.LENGTH_SHORT).show()
-            }
+    private fun setupSectionAdapter() {
+        Log.d(TAG, "Setting up section adapter")
+        sectionAdapter = HomeSectionAdapter { video ->
+            Log.d(TAG, "Video clicked: ${video.vod_name}")
         }
-        Log.d(TAG, "RecyclerView adapter set")
-    }
-    
-    /**
-     * 解析第一个剧集的播放 URL
-     * 格式：剧集 1$URL1#剧集 2$URL2#...
-     */
-    private fun parseFirstEpisodeUrl(playUrl: String): String {
-        Log.d(TAG, "Parsing play URL: ${playUrl.take(100)}...")
-        if (playUrl.isEmpty()) {
-            Log.w(TAG, "Play URL is empty")
-            return ""
-        }
-        try {
-            // 按 # 分割剧集
-            val episodes = playUrl.split("#")
-            Log.d(TAG, "Found ${episodes.size} episodes")
-            if (episodes.isNotEmpty()) {
-                // 取第一集，格式为 "剧集名$URL"
-                val firstEpisode = episodes[0]
-                Log.d(TAG, "First episode: $firstEpisode")
-                val parts = firstEpisode.split("$")
-                Log.d(TAG, "Split into ${parts.size} parts")
-                if (parts.size >= 2) {
-                    val url = parts[1]
-                    Log.d(TAG, "Extracted URL: ${url.take(100)}...")
-                    return url // 返回 URL 部分
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error parsing play URL", e)
-        }
-        return ""
+        // 注意：这里我们不使用 RecyclerView，而是动态添加区块
     }
     
     private fun observeViewModel() {
         Log.d(TAG, "Observing ViewModel")
-        viewModel.videos.observe(viewLifecycleOwner, Observer { videos ->
-            Log.d(TAG, "Videos received: ${videos?.size}")
-            videos?.let {
-                (binding.recyclerViewHome.adapter as? VideoAdapter)?.submitList(it)
+        viewModel.sections.observe(viewLifecycleOwner, Observer { sections ->
+            Log.d(TAG, "Sections received: ${sections?.size}")
+            sections?.let {
+                renderSections(it)
             }
         })
         
@@ -147,6 +89,43 @@ class HomeFragment : Fragment() {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
             }
         })
+    }
+    
+    private fun renderSections(sections: List<HomeSection>) {
+        val container = binding.homeSectionsContainer
+        container.removeAllViews()
+        
+        sections.forEach { section ->
+            // 动态创建区块视图
+            val sectionView = layoutInflater.inflate(
+                com.example.videoapp.R.layout.item_home_section,
+                container,
+                false
+            )
+            
+            // 设置标题
+            val titleView = sectionView.findViewById<android.widget.TextView>(
+                com.example.videoapp.R.id.text_view_section_title
+            )
+            titleView.text = section.title
+            
+            // 设置横向视频列表
+            val recyclerView = sectionView.findViewById<androidx.recyclerview.widget.RecyclerView>(
+                com.example.videoapp.R.id.recycler_view_section_videos
+            )
+            recyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(
+                requireContext(),
+                androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL,
+                false
+            )
+            
+            val videoAdapter = HomeSectionVideoAdapter(section.videos) { video ->
+                Log.d(TAG, "Video clicked: ${video.vod_name}")
+            }
+            recyclerView.adapter = videoAdapter
+            
+            container.addView(sectionView)
+        }
     }
     
     override fun onDestroyView() {

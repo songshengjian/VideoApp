@@ -76,6 +76,10 @@
         "source": "com.example.videoapp-main-59:/drawable/nav_button_background.xml"
     },
     {
+        "merged": "com.example.videoapp-merged_res-57:/layout_item_home_section.xml.flat",
+        "source": "com.example.videoapp-main-59:/layout/item_home_section.xml"
+    },
+    {
         "merged": "com.example.videoapp-merged_res-57:/drawable-mdpi_ic_changguang.png.flat",
         "source": "com.example.videoapp-main-59:/drawable-mdpi/ic_changguang.png"
     },
@@ -142,6 +146,10 @@
     {
         "merged": "com.example.videoapp-merged_res-57:/drawable-xhdpi_ic_changguang.png.flat",
         "source": "com.example.videoapp-main-59:/drawable-xhdpi/ic_changguang.png"
+    },
+    {
+        "merged": "com.example.videoapp-merged_res-57:/layout_item_home_video.xml.flat",
+        "source": "com.example.videoapp-main-59:/layout/item_home_video.xml"
     },
     {
         "merged": "com.example.videoapp-merged_res-57:/drawable_bg_source_selected.xml.flat",

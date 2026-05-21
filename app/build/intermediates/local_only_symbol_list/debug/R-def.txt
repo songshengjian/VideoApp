@@ -36,6 +36,7 @@ id edit_text_username
 id fragment_container
 id grid_speed
 id header
+id home_sections_container
 id image_view_avatar
 id image_view_video_cover
 id layout_bottom_bar
@@ -57,8 +58,8 @@ id progress_bar_register
 id progress_bar_search
 id recycler_view_categories
 id recycler_view_episodes
-id recycler_view_home
 id recycler_view_search
+id recycler_view_section_videos
 id recycler_view_sources
 id root_layout
 id speed_0_5
@@ -76,6 +77,7 @@ id text_view_current_episode
 id text_view_episode_name
 id text_view_logo
 id text_view_nav_item
+id text_view_section_title
 id text_view_source_name
 id text_view_title
 id text_view_username
@@ -93,6 +95,8 @@ layout fragment_profile
 layout fragment_search
 layout item_category
 layout item_episode
+layout item_home_section
+layout item_home_video
 layout item_nav_category
 layout item_source
 layout item_video
