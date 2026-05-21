@@ -14,6 +14,7 @@ drawable bg_episode_normal
 drawable bg_episode_selected
 drawable bg_source_normal
 drawable bg_source_selected
+drawable ic_changguang
 drawable nav_button_background
 drawable placeholder_image
 drawable remarks_background

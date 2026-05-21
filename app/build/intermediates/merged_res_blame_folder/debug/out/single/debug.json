@@ -12,6 +12,10 @@
         "source": "com.example.videoapp-main-59:/navigation/nav_graph.xml"
     },
     {
+        "merged": "com.example.videoapp-merged_res-57:/drawable-hdpi_ic_changguang.png.flat",
+        "source": "com.example.videoapp-main-59:/drawable-hdpi/ic_changguang.png"
+    },
+    {
         "merged": "com.example.videoapp-merged_res-57:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
         "source": "com.example.videoapp-main-59:/mipmap-xxxhdpi/ic_launcher_round.png"
     },
@@ -44,6 +48,10 @@
         "source": "com.example.videoapp-main-59:/layout/activity_register.xml"
     },
     {
+        "merged": "com.example.videoapp-merged_res-57:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.example.videoapp-main-59:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
         "merged": "com.example.videoapp-merged_res-57:/mipmap-mdpi_ic_launcher_round.png.flat",
         "source": "com.example.videoapp-main-59:/mipmap-mdpi/ic_launcher_round.png"
     },
@@ -68,8 +76,16 @@
         "source": "com.example.videoapp-main-59:/drawable/nav_button_background.xml"
     },
     {
+        "merged": "com.example.videoapp-merged_res-57:/drawable-mdpi_ic_changguang.png.flat",
+        "source": "com.example.videoapp-main-59:/drawable-mdpi/ic_changguang.png"
+    },
+    {
         "merged": "com.example.videoapp-merged_res-57:/mipmap-hdpi_ic_launcher_round.png.flat",
         "source": "com.example.videoapp-main-59:/mipmap-hdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.example.videoapp-merged_res-57:/drawable_ic_changguang.png.flat",
+        "source": "com.example.videoapp-main-59:/drawable/ic_changguang.png"
     },
     {
         "merged": "com.example.videoapp-merged_res-57:/layout_fragment_search.xml.flat",
@@ -92,6 +108,14 @@
         "source": "com.example.videoapp-main-59:/drawable/placeholder_image.xml"
     },
     {
+        "merged": "com.example.videoapp-merged_res-57:/drawable-xxhdpi_ic_changguang.png.flat",
+        "source": "com.example.videoapp-main-59:/drawable-xxhdpi/ic_changguang.png"
+    },
+    {
+        "merged": "com.example.videoapp-merged_res-57:/drawable-xxxhdpi_ic_changguang.png.flat",
+        "source": "com.example.videoapp-main-59:/drawable-xxxhdpi/ic_changguang.png"
+    },
+    {
         "merged": "com.example.videoapp-merged_res-57:/layout_item_video.xml.flat",
         "source": "com.example.videoapp-main-59:/layout/item_video.xml"
     },
@@ -104,6 +128,10 @@
         "source": "com.example.videoapp-main-59:/drawable/bg_episode_normal.xml"
     },
     {
+        "merged": "com.example.videoapp-merged_res-57:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.example.videoapp-main-59:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
         "merged": "com.example.videoapp-merged_res-57:/layout_item_source.xml.flat",
         "source": "com.example.videoapp-main-59:/layout/item_source.xml"
     },
@@ -112,16 +140,16 @@
         "source": "com.example.videoapp-main-59:/mipmap-xxhdpi/ic_launcher_round.png"
     },
     {
+        "merged": "com.example.videoapp-merged_res-57:/drawable-xhdpi_ic_changguang.png.flat",
+        "source": "com.example.videoapp-main-59:/drawable-xhdpi/ic_changguang.png"
+    },
+    {
         "merged": "com.example.videoapp-merged_res-57:/drawable_bg_source_selected.xml.flat",
         "source": "com.example.videoapp-main-59:/drawable/bg_source_selected.xml"
     },
     {
         "merged": "com.example.videoapp-merged_res-57:/layout_activity_login.xml.flat",
         "source": "com.example.videoapp-main-59:/layout/activity_login.xml"
-    },
-    {
-        "merged": "com.example.videoapp-merged_res-57:/mipmap-anydpi-v26_ic_launcher.png.flat",
-        "source": "com.example.videoapp-main-59:/mipmap-anydpi-v26/ic_launcher.png"
     },
     {
         "merged": "com.example.videoapp-merged_res-57:/mipmap-mdpi_ic_launcher.png.flat",
