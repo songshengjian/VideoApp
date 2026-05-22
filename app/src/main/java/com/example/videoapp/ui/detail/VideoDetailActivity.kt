@@ -53,7 +53,7 @@ class VideoDetailActivity : AppCompatActivity() {
             videoId = intent.getStringExtra(EXTRA_VIDEO_ID) ?: ""
             videoTitle = intent.getStringExtra(EXTRA_VIDEO_TITLE) ?: ""
             
-            binding.textViewVideoTitle.text = videoTitle
+            binding.textViewAppBarTitle.text = videoTitle
             
             setupUI()
             
