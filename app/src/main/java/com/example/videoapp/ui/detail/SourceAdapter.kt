@@ -43,17 +43,26 @@ class SourceAdapter(
             }
         )
         
+        // 根据剧集数量设置样式
+        val isEmpty = source.episodes.isEmpty()
+        
         // 高亮当前选中的源
         if (position == currentIndex) {
             holder.textViewSource.setTextColor(0xFFE63950.toInt())
             holder.textViewSource.setBackgroundResource(R.drawable.source_active_bg)
+        } else if (isEmpty) {
+            holder.textViewSource.setTextColor(0xFF999999.toInt())
+            holder.textViewSource.setBackgroundResource(R.drawable.source_normal_bg)
         } else {
             holder.textViewSource.setTextColor(0xFF333333.toInt())
             holder.textViewSource.setBackgroundResource(R.drawable.source_normal_bg)
         }
         
+        holder.itemView.isEnabled = !isEmpty
         holder.itemView.setOnClickListener {
-            onItemClick(position)
+            if (!isEmpty) {
+                onItemClick(position)
+            }
         }
     }
     

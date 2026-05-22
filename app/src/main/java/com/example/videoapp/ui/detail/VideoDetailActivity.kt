@@ -99,13 +99,20 @@ class VideoDetailActivity : AppCompatActivity() {
         binding.popupSource.visibility = View.VISIBLE
         if (popupSourceAdapter == null && playSources.isNotEmpty()) {
             popupSourceAdapter = SourceAdapter(playSources, currentSourceIndex) { index ->
+                val source = playSources[index]
+                if (source.episodes.isEmpty()) {
+                    Toast.makeText(this, "该渠道暂无剧集", Toast.LENGTH_SHORT).show()
+                    return@SourceAdapter
+                }
                 currentSourceIndex = index
                 currentEpisodeIndex = 0
                 episodeAdapter?.updateList(playSources[index].episodes, 0)
                 sourceAdapter?.updateCurrentIndex(index)
                 popupSourceAdapter?.updateCurrentIndex(index)
                 hideSourcePopup()
-                Toast.makeText(this, "已切换到 ${playSources[index].name}", Toast.LENGTH_SHORT).show()
+                // 自动开始播放
+                startPlayback()
+                Toast.makeText(this, "已切换到 ${source.name}", Toast.LENGTH_SHORT).show()
             }
             binding.recyclerViewPopupSources.adapter = popupSourceAdapter
         } else {
@@ -210,9 +217,8 @@ class VideoDetailActivity : AppCompatActivity() {
                 }
             }
             
-            if (episodes.isNotEmpty()) {
-                sources.add(PlaySource(name, episodes, 0))
-            }
+            // 保留所有播放源，即使剧集为空
+            sources.add(PlaySource(name, episodes, 0))
         }
         
         return sources
