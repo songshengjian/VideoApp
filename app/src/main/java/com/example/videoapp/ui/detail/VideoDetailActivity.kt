@@ -151,6 +151,10 @@ class VideoDetailActivity : AppCompatActivity() {
                             }
                             binding.textViewVideoDesc.text = "简介：$content"
                             
+                            // 打印原始数据用于调试
+                            Log.d(TAG, "vod_play_from: ${video.vod_play_from}")
+                            Log.d(TAG, "vod_play_url: ${video.vod_play_url}")
+                            
                             playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
                             if (playSources.isNotEmpty()) {
                                 // 创建播放源适配器
