@@ -166,6 +166,9 @@ class VideoDetailActivity : AppCompatActivity() {
                                 binding.layoutSources.visibility = View.VISIBLE
                                 binding.layoutEpisodes.visibility = View.VISIBLE
                                 binding.buttonPlay.visibility = View.VISIBLE
+                                
+                                // 检测所有播放源状态
+                                checkSourcesStatus()
                             } else {
                                 Toast.makeText(this@VideoDetailActivity, "暂无播放资源", Toast.LENGTH_SHORT).show()
                                 binding.layoutSources.visibility = View.GONE
@@ -209,7 +212,7 @@ class VideoDetailActivity : AppCompatActivity() {
             }
             
             if (episodes.isNotEmpty()) {
-                sources.add(PlaySource(name, episodes))
+                sources.add(PlaySource(name, episodes, 0))
             }
         }
         
@@ -218,6 +221,38 @@ class VideoDetailActivity : AppCompatActivity() {
     
     private fun updateSourceList() {
         sourceAdapter?.notifyDataSetChanged()
+    }
+    
+    private fun checkSourcesStatus() {
+        lifecycleScope.launch {
+            for (i in playSources.indices) {
+                val source = playSources[i]
+                if (source.episodes.isNotEmpty()) {
+                    val firstUrl = source.episodes.first().url
+                    val isValid = checkUrlValid(firstUrl)
+                    playSources[i] = source.copy(status = if (isValid) 1 else 2)
+                } else {
+                    playSources[i] = source.copy(status = 2)
+                }
+                withContext(Dispatchers.Main) {
+                    sourceAdapter?.notifyItemChanged(i)
+                }
+            }
+        }
+    }
+    
+    private suspend fun checkUrlValid(url: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+            connection.requestMethod = "HEAD"
+            connection.connectTimeout = 5000
+            connection.readTimeout = 5000
+            val responseCode = connection.responseCode
+            connection.disconnect()
+            responseCode in 200..399
+        } catch (e: Exception) {
+            false
+        }
     }
     
     private fun updateEpisodeList() {
@@ -278,7 +313,8 @@ class VideoDetailActivity : AppCompatActivity() {
 
 data class PlaySource(
     val name: String,
-    val episodes: List<Episode>
+    val episodes: List<Episode>,
+    var status: Int = 0  // 0=待检测, 1=成功, 2=失败
 )
 
 data class Episode(

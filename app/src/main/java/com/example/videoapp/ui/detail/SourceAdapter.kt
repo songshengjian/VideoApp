@@ -15,6 +15,7 @@ class SourceAdapter(
     
     class SourceViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val textViewSource: TextView = view.findViewById(R.id.textViewSource)
+        val textViewStatus: TextView = view.findViewById(R.id.textViewStatus)
     }
     
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SourceViewHolder {
@@ -27,12 +28,27 @@ class SourceAdapter(
         val source = sources[position]
         holder.textViewSource.text = "${source.name} (${source.episodes.size}集)"
         
+        // 显示状态
+        val statusText = when (source.status) {
+            1 -> "成功"
+            2 -> "失败"
+            else -> "待检测"
+        }
+        holder.textViewStatus.text = statusText
+        holder.textViewStatus.setTextColor(
+            when (source.status) {
+                1 -> 0xFF4CAF50.toInt()  // 绿色-成功
+                2 -> 0xFFF44336.toInt()   // 红色-失败
+                else -> 0xFF999999.toInt() // 灰色-待检测
+            }
+        )
+        
         // 高亮当前选中的源
         if (position == currentIndex) {
             holder.textViewSource.setTextColor(0xFFE63950.toInt())
             holder.textViewSource.setBackgroundResource(R.drawable.source_active_bg)
         } else {
-            holder.textViewSource.setTextColor(0xFF666666.toInt())
+            holder.textViewSource.setTextColor(0xFF333333.toInt())
             holder.textViewSource.setBackgroundResource(R.drawable.source_normal_bg)
         }
         
