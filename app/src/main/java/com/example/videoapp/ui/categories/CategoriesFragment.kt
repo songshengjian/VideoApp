@@ -89,19 +89,10 @@ class CategoriesFragment : Fragment() {
             try {
                 Log.d(TAG, "Video clicked: ${video.vod_name}")
                 
-                // 获取播放 URL
-                val playUrl = parseFirstEpisodeUrl(video.vod_play_url)
-                
-                if (playUrl.isEmpty()) {
-                    Toast.makeText(requireContext(), "该视频暂无播放资源", Toast.LENGTH_SHORT).show()
-                    return@VideoAdapter
-                }
-                
-                // 跳转到视频播放页面
-                val intent = android.content.Intent(requireContext(), VideoPlayerActivity::class.java)
-                intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
-                intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_TITLE, video.vod_name)
-                intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, playUrl)
+                // 跳转到视频详情页
+                val intent = android.content.Intent(requireContext(), com.example.videoapp.ui.detail.VideoDetailActivity::class.java)
+                intent.putExtra(com.example.videoapp.ui.detail.VideoDetailActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
+                intent.putExtra(com.example.videoapp.ui.detail.VideoDetailActivity.EXTRA_VIDEO_TITLE, video.vod_name)
                 startActivity(intent)
             } catch (e: Exception) {
                 Log.e(TAG, "Error opening video player", e)

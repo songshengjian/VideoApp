@@ -55,6 +55,9 @@
             android:screenOrientation="landscape"
             android:theme="@style/Theme.VideoApp.Player" />
         <activity
+            android:name="com.example.videoapp.ui.detail.VideoDetailActivity"
+            android:exported="false" />
+        <activity
             android:name="com.example.videoapp.ui.auth.LoginActivity"
             android:exported="false" />
         <activity

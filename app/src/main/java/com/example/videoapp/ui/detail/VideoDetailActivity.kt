@@ -163,11 +163,10 @@ class VideoDetailActivity : AppCompatActivity() {
                                 }
                                 binding.recyclerViewEpisodes.adapter = episodeAdapter
                                 
-                                binding.layoutSources.visibility = View.VISIBLE
-                                binding.layoutEpisodes.visibility = View.VISIBLE
-                                binding.buttonPlay.visibility = View.VISIBLE
+                                // 进入详情页直接显示渠道选择弹窗
+                                showSourcePopup()
                                 
-                                // 检测所有播放源状态
+                                // 检测所有播放源状态（异步）
                                 checkSourcesStatus()
                             } else {
                                 Toast.makeText(this@VideoDetailActivity, "暂无播放资源", Toast.LENGTH_SHORT).show()

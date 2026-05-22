@@ -1,11 +1,8 @@
 package com.example.videoapp.ui.home
 
 import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -13,13 +10,12 @@ import com.example.videoapp.R
 import com.example.videoapp.data.model.Video
 import com.example.videoapp.databinding.ItemHomeSectionBinding
 import com.example.videoapp.databinding.ItemHomeVideoBinding
-import com.example.videoapp.ui.player.VideoPlayerActivity
+import com.example.videoapp.ui.detail.VideoDetailActivity
 
 class HomeSectionAdapter(
     private val onVideoClick: (Video) -> Unit
 ) : RecyclerView.Adapter<HomeSectionAdapter.SectionViewHolder>() {
     
-    private val TAG = "HomeSectionAdapter"
     private var sections: List<HomeSection> = emptyList()
     
     fun setSections(newSections: List<HomeSection>) {
@@ -95,35 +91,12 @@ class HomeSectionAdapter(
                     .into(binding.imageViewVideoCover)
                 
                 binding.root.setOnClickListener {
-                    val playUrl = parseFirstEpisodeUrl(video.vod_play_url)
-                    if (playUrl.isEmpty()) {
-                        Toast.makeText(context, "该视频暂无播放资源", Toast.LENGTH_SHORT).show()
-                        return@setOnClickListener
-                    }
-                    
-                    val intent = android.content.Intent(context, VideoPlayerActivity::class.java)
-                    intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
-                    intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_TITLE, video.vod_name)
-                    intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, playUrl)
+                    // 跳转到视频详情页
+                    val intent = android.content.Intent(context, VideoDetailActivity::class.java)
+                    intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
+                    intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_TITLE, video.vod_name)
                     context.startActivity(intent)
                 }
-            }
-            
-            private fun parseFirstEpisodeUrl(playUrl: String): String {
-                if (playUrl.isEmpty()) return ""
-                try {
-                    val episodes = playUrl.split("#")
-                    if (episodes.isNotEmpty()) {
-                        val firstEpisode = episodes[0]
-                        val parts = firstEpisode.split("$")
-                        if (parts.size >= 2) {
-                            return parts[1]
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error parsing play URL", e)
-                }
-                return ""
             }
         }
     }
