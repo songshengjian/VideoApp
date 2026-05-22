@@ -133,7 +133,7 @@ class VideoDetailActivity : AppCompatActivity() {
         
         lifecycleScope.launch {
             try {
-                val response = ApiClient.videoApi.getVideoDetail(videoId)
+                val response = ApiClient.videoApi.getVideoDetailAllChannels(videoId)
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful && response.body() != null) {
                         val video = response.body()!!.list.firstOrNull()
@@ -150,10 +150,6 @@ class VideoDetailActivity : AppCompatActivity() {
                                 content = content.substring(0, 200) + "..."
                             }
                             binding.textViewVideoDesc.text = "简介：$content"
-                            
-                            // 打印原始数据用于调试
-                            Log.d(TAG, "vod_play_from: ${video.vod_play_from}")
-                            Log.d(TAG, "vod_play_url: ${video.vod_play_url}")
                             
                             playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
                             if (playSources.isNotEmpty()) {
