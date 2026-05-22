@@ -5,10 +5,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.videoapp.R
 
 class EpisodeAdapter(
     private var episodes: List<Episode>,
-    private val currentIndex: Int,
+    private var currentIndex: Int,
     private val onItemClick: (Int) -> Unit
 ) : RecyclerView.Adapter<EpisodeAdapter.EpisodeViewHolder>() {
     
