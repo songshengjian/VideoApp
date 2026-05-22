@@ -170,8 +170,10 @@ class VideoDetailActivity : AppCompatActivity() {
                                 }
                                 binding.recyclerViewEpisodes.adapter = episodeAdapter
                                 
-                                // 进入详情页直接显示渠道选择弹窗
-                                showSourcePopup()
+                                // 直接显示播放源和选集列表（不弹窗）
+                                binding.layoutSources.visibility = View.VISIBLE
+                                binding.layoutEpisodes.visibility = View.VISIBLE
+                                binding.buttonPlay.visibility = View.VISIBLE
                                 
                                 // 检测所有播放源状态（异步）
                                 checkSourcesStatus()
@@ -200,24 +202,29 @@ class VideoDetailActivity : AppCompatActivity() {
         val sources = mutableListOf<PlaySource>()
         if (playFrom.isEmpty() || playUrl.isEmpty()) return sources
         
-        val sourceNames = playFrom.split("$$$").map { it.trim() }.filter { it.isNotEmpty() }
-        val sourceUrls = playUrl.split("$$$").map { it.trim() }.filter { it.isNotEmpty() }
+        // 不过滤空字符串，保留所有播放源
+        val sourceNames = playFrom.split("$$$").map { it.trim() }
+        val sourceUrls = playUrl.split("$$$").map { it.trim() }
         
         val count = minOf(sourceNames.size, sourceUrls.size)
         for (i in 0 until count) {
             val name = sourceNames[i]
             val urlStr = sourceUrls[i]
+            
+            if (name.isEmpty()) continue
+            
             val episodes = mutableListOf<Episode>()
             
-            val episodeParts = urlStr.split("#").filter { it.isNotEmpty() }
-            for (part in episodeParts) {
-                val episodeData = part.split("$").filter { it.isNotEmpty() }
-                if (episodeData.size >= 2) {
-                    episodes.add(Episode(episodeData[0].trim(), episodeData[1].trim()))
+            if (urlStr.isNotEmpty()) {
+                val episodeParts = urlStr.split("#").filter { it.isNotEmpty() }
+                for (part in episodeParts) {
+                    val episodeData = part.split("$")
+                    if (episodeData.size >= 2) {
+                        episodes.add(Episode(episodeData[0].trim(), episodeData[1].trim()))
+                    }
                 }
             }
             
-            // 保留所有播放源，即使剧集为空
             sources.add(PlaySource(name, episodes, 0))
         }
         
