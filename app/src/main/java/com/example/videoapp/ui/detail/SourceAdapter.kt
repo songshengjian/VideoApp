@@ -7,8 +7,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class SourceAdapter(
-    private val sources: List<PlaySource>,
-    private val currentIndex: Int,
+    private var sources: List<PlaySource>,
+    private var currentIndex: Int,
     private val onItemClick: (Int) -> Unit
 ) : RecyclerView.Adapter<SourceAdapter.SourceViewHolder>() {
     
@@ -41,4 +41,19 @@ class SourceAdapter(
     }
     
     override fun getItemCount(): Int = sources.size
+    
+    fun updateList(newSources: List<PlaySource>, newIndex: Int) {
+        sources = newSources
+        currentIndex = newIndex
+        notifyDataSetChanged()
+    }
+    
+    fun updateCurrentIndex(newIndex: Int) {
+        val oldIndex = currentIndex
+        currentIndex = newIndex
+        if (oldIndex != currentIndex) {
+            notifyItemChanged(oldIndex)
+            notifyItemChanged(currentIndex)
+        }
+    }
 }

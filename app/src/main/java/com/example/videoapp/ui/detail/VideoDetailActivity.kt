@@ -9,13 +9,13 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.videoapp.R
 import com.example.videoapp.data.api.ApiClient
 import com.example.videoapp.data.model.Video
 import com.example.videoapp.databinding.ActivityVideoDetailBinding
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -33,8 +33,8 @@ class VideoDetailActivity : AppCompatActivity() {
     private var currentSourceIndex: Int = 0
     private var currentEpisodeIndex: Int = 0
     
-    private lateinit var sourceAdapter: SourceAdapter
-    private lateinit var episodeAdapter: EpisodeAdapter
+    private var sourceAdapter: SourceAdapter? = null
+    private var episodeAdapter: EpisodeAdapter? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,26 +79,20 @@ class VideoDetailActivity : AppCompatActivity() {
         }
         
         // 设置播放源列表
-        sourceAdapter = SourceAdapter(playSources, currentSourceIndex) { index ->
-            currentSourceIndex = index
-            currentEpisodeIndex = 0
-            updateEpisodeList()
-            Toast.makeText(this, "已切换到 ${playSources[index].name}", Toast.LENGTH_SHORT).show()
-        }
         binding.recyclerViewSources.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        binding.recyclerViewSources.adapter = sourceAdapter
         
         // 设置集列表
-        episodeAdapter = EpisodeAdapter(mutableListOf(), currentEpisodeIndex) { index ->
-            currentEpisodeIndex = index
-            updateEpisodeList()
-        }
         binding.recyclerViewEpisodes.layoutManager = LinearLayoutManager(this)
-        binding.recyclerViewEpisodes.adapter = episodeAdapter
     }
     
     private fun loadVideoDetail() {
-        CoroutineScope(Dispatchers.IO).launch {
+        if (videoId.isEmpty()) {
+            Toast.makeText(this, "视频ID为空", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+        
+        lifecycleScope.launch {
             try {
                 val response = ApiClient.videoApi.getVideoDetail(videoId)
                 withContext(Dispatchers.Main) {
@@ -107,6 +101,7 @@ class VideoDetailActivity : AppCompatActivity() {
                         if (video != null) {
                             currentVideo = video
                             binding.textViewVideoTitle.text = video.vod_name
+                            binding.textViewAppBarTitle.text = video.vod_name
                             binding.textViewVideoYear.text = "年份：${video.vod_year ?: "未知"}"
                             binding.textViewVideoArea.text = "地区：${video.vod_area ?: "未知"}"
                             binding.textViewVideoType.text = "类型：${video.vod_class ?: "未知"}"
@@ -119,15 +114,38 @@ class VideoDetailActivity : AppCompatActivity() {
                             
                             playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
                             if (playSources.isNotEmpty()) {
-                                updateSourceList()
-                                updateEpisodeList()
+                                // 创建播放源适配器
+                                sourceAdapter = SourceAdapter(playSources, currentSourceIndex) { index ->
+                                    currentSourceIndex = index
+                                    currentEpisodeIndex = 0
+                                    episodeAdapter?.updateList(playSources[index].episodes, 0)
+                                    sourceAdapter?.updateCurrentIndex(index)
+                                    Toast.makeText(this@VideoDetailActivity, "已切换到 ${playSources[index].name}", Toast.LENGTH_SHORT).show()
+                                }
+                                binding.recyclerViewSources.adapter = sourceAdapter
+                                
+                                // 创建集数适配器
+                                episodeAdapter = EpisodeAdapter(playSources[currentSourceIndex].episodes, currentEpisodeIndex) { index ->
+                                    currentEpisodeIndex = index
+                                    episodeAdapter?.updateCurrentIndex(index)
+                                }
+                                binding.recyclerViewEpisodes.adapter = episodeAdapter
+                                
                                 binding.layoutSources.visibility = View.VISIBLE
                                 binding.layoutEpisodes.visibility = View.VISIBLE
                                 binding.buttonPlay.visibility = View.VISIBLE
                             } else {
                                 Toast.makeText(this@VideoDetailActivity, "暂无播放资源", Toast.LENGTH_SHORT).show()
+                                binding.layoutSources.visibility = View.GONE
+                                binding.layoutEpisodes.visibility = View.GONE
+                                binding.buttonPlay.visibility = View.GONE
                             }
+                        } else {
+                            Toast.makeText(this@VideoDetailActivity, "视频信息不存在", Toast.LENGTH_SHORT).show()
+                            finish()
                         }
+                    } else {
+                        Toast.makeText(this@VideoDetailActivity, "加载视频详情失败", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
@@ -167,17 +185,22 @@ class VideoDetailActivity : AppCompatActivity() {
     }
     
     private fun updateSourceList() {
-        sourceAdapter.notifyDataSetChanged()
+        sourceAdapter?.notifyDataSetChanged()
     }
     
     private fun updateEpisodeList() {
         if (currentSourceIndex < playSources.size) {
             val episodes = playSources[currentSourceIndex].episodes
-            episodeAdapter.updateList(episodes, currentEpisodeIndex)
+            episodeAdapter?.updateList(episodes, currentEpisodeIndex)
         }
     }
     
     private fun startPlayback() {
+        if (videoId.isEmpty()) {
+            Toast.makeText(this, "视频ID为空", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
         if (playSources.isEmpty() || currentSourceIndex >= playSources.size) {
             Toast.makeText(this, "暂无播放资源", Toast.LENGTH_SHORT).show()
             return

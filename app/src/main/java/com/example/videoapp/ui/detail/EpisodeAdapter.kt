@@ -47,4 +47,13 @@ class EpisodeAdapter(
         currentIndex = newIndex
         notifyDataSetChanged()
     }
+    
+    fun updateCurrentIndex(newIndex: Int) {
+        val oldIndex = currentIndex
+        currentIndex = newIndex
+        if (oldIndex != currentIndex) {
+            notifyItemChanged(oldIndex)
+            notifyItemChanged(currentIndex)
+        }
+    }
 }
