@@ -379,7 +379,10 @@ class VideoPlayerActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("返回详情")
             .setMessage("是否返回视频详情页？")
-            .setPositiveButton("返回") { _, _ -> finish() }
+            .setPositiveButton("返回") { _, _ -> 
+                setResult(RESULT_OK)
+                finish()
+            }
             .setNegativeButton("继续观看", null)
             .show()
     }

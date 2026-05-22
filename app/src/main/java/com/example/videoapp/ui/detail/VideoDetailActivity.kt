@@ -16,6 +16,7 @@ import com.example.videoapp.R
 import com.example.videoapp.data.api.ApiClient
 import com.example.videoapp.data.model.Video
 import com.example.videoapp.databinding.ActivityVideoDetailBinding
+import com.example.videoapp.ui.player.VideoPlayerActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,6 +36,7 @@ class VideoDetailActivity : AppCompatActivity() {
     
     private var sourceAdapter: SourceAdapter? = null
     private var episodeAdapter: EpisodeAdapter? = null
+    private var popupSourceAdapter: SourceAdapter? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,6 +85,36 @@ class VideoDetailActivity : AppCompatActivity() {
         
         // 设置集列表
         binding.recyclerViewEpisodes.layoutManager = LinearLayoutManager(this)
+        
+        // 弹窗中的播放源列表
+        binding.recyclerViewPopupSources.layoutManager = LinearLayoutManager(this)
+        
+        // 关闭弹窗按钮
+        binding.buttonClosePopupSource.setOnClickListener {
+            hideSourcePopup()
+        }
+    }
+    
+    private fun showSourcePopup() {
+        binding.popupSource.visibility = View.VISIBLE
+        if (popupSourceAdapter == null && playSources.isNotEmpty()) {
+            popupSourceAdapter = SourceAdapter(playSources, currentSourceIndex) { index ->
+                currentSourceIndex = index
+                currentEpisodeIndex = 0
+                episodeAdapter?.updateList(playSources[index].episodes, 0)
+                sourceAdapter?.updateCurrentIndex(index)
+                popupSourceAdapter?.updateCurrentIndex(index)
+                hideSourcePopup()
+                Toast.makeText(this, "已切换到 ${playSources[index].name}", Toast.LENGTH_SHORT).show()
+            }
+            binding.recyclerViewPopupSources.adapter = popupSourceAdapter
+        } else {
+            popupSourceAdapter?.updateCurrentIndex(currentSourceIndex)
+        }
+    }
+    
+    private fun hideSourcePopup() {
+        binding.popupSource.visibility = View.GONE
     }
     
     private fun loadVideoDetail() {
@@ -224,8 +256,10 @@ class VideoDetailActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_PLAY) {
-            // 播放器返回，保持在详情页，可以选择其他剧集或切换播放源
-            // 不需要做任何处理
+            // 从播放器返回时，显示播放源选择弹窗
+            if (playSources.isNotEmpty()) {
+                showSourcePopup()
+            }
         }
     }
     
