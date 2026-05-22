@@ -301,22 +301,6 @@ class VideoPlayerActivity : AppCompatActivity() {
                 .build()
                 
             binding.playerView.player = exoPlayer
-            playVideo(videoUrl)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error setting up player", e)
-            Toast.makeText(this, "播放器设置失败：${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-    
-    private fun playVideo(videoUrl: String) {
-        try {
-            currentVideoUrl = videoUrl
-            val uri = Uri.parse(videoUrl)
-            val mediaItem = MediaItem.fromUri(uri)
-            
-            exoPlayer?.setMediaItem(mediaItem)
-            exoPlayer?.prepare()
-            exoPlayer?.playWhenReady = true
             
             exoPlayer?.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
@@ -333,18 +317,48 @@ class VideoPlayerActivity : AppCompatActivity() {
                 }
                 
                 override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-                    Log.e(TAG, "Player error: ${error.errorCodeName}", error)
+                    Log.e(TAG, "Player error code: ${error.errorCode}, message: ${error.message}", error)
                     val errorMsg = when (error.errorCode) {
                         androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED -> "网络连接失败，请检查网络"
-                        androidx.media3.common.PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED -> "不支持的视频格式"
-                        else -> "播放失败：${error.message}"
+                        androidx.media3.common.PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED -> "不支持的视频格式，请尝试切换播放源"
+                        androidx.media3.common.PlaybackException.ERROR_CODE_DECODER_INIT_FAILED -> "视频解码失败，请尝试切换播放源"
+                        else -> "播放失败：${error.message ?: "未知错误"}"
                     }
-                    Toast.makeText(this@VideoPlayerActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@VideoPlayerActivity, errorMsg, Toast.LENGTH_LONG).show()
                 }
             })
+            
+            playVideo(videoUrl)
         } catch (e: Exception) {
-            Log.e(TAG, "Error playing video", e)
-            Toast.makeText(this, "播放失败：${e.message}", Toast.LENGTH_SHORT).show()
+            Log.e(TAG, "Error setting up player", e)
+            Toast.makeText(this, "播放器设置失败：${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun playVideo(videoUrl: String) {
+        try {
+            currentVideoUrl = videoUrl
+            val url = videoUrl.trim()
+            
+            if (url.isEmpty()) {
+                Toast.makeText(this, "视频链接为空", Toast.LENGTH_SHORT).show()
+                return
+            }
+            
+            Log.d(TAG, "Playing video URL: $url")
+            
+            val uri = Uri.parse(url)
+            val mediaItemBuilder = MediaItem.Builder()
+                .setUri(uri)
+            
+            exoPlayer?.setMediaItem(mediaItemBuilder.build())
+            exoPlayer?.prepare()
+            exoPlayer?.playWhenReady = true
+            
+            Log.d(TAG, "Video playback started")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error playing video: ${e.message}", e)
+            Toast.makeText(this, "播放失败：${e.message ?: "未知错误"}", Toast.LENGTH_SHORT).show()
         }
     }
     
