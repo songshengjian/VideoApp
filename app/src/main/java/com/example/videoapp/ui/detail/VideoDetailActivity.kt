@@ -201,8 +201,15 @@ class VideoDetailActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_PLAY) {
-            // 播放器返回，不需要做任何处理，保持在详情页
+            // 播放器返回，保持在详情页，可以选择其他剧集或切换播放源
+            // 不需要做任何处理
         }
+    }
+    
+    // 从播放器返回时，可能更新选集状态
+    override fun onResume() {
+        super.onResume()
+        // 如果需要从播放器更新当前播放进度，可以在这里处理
     }
     
     companion object {
