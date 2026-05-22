@@ -377,9 +377,9 @@ class VideoPlayerActivity : AppCompatActivity() {
     
     private fun showExitConfirmDialog() {
         AlertDialog.Builder(this)
-            .setTitle("退出播放")
-            .setMessage("是否退出当前视频？")
-            .setPositiveButton("退出") { _, _ -> finish() }
+            .setTitle("返回详情")
+            .setMessage("是否返回视频详情页？")
+            .setPositiveButton("返回") { _, _ -> finish() }
             .setNegativeButton("继续观看", null)
             .show()
     }

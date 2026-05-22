@@ -12,7 +12,7 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.videoapp.databinding.FragmentSearchBinding
 import com.example.videoapp.ui.home.VideoAdapter
-import com.example.videoapp.ui.player.VideoPlayerActivity
+import com.example.videoapp.ui.detail.VideoDetailActivity
 
 class SearchFragment : Fragment() {
     
@@ -72,47 +72,16 @@ class SearchFragment : Fragment() {
             try {
                 Log.d(TAG, "Video clicked: ${video.vod_name}")
                 
-                // 获取播放 URL
-                val playUrl = parseFirstEpisodeUrl(video.vod_play_url)
-                
-                if (playUrl.isEmpty()) {
-                    Toast.makeText(requireContext(), "该视频暂无播放资源", Toast.LENGTH_SHORT).show()
-                    return@VideoAdapter
-                }
-                
-                // 跳转到视频播放页面
-                val intent = android.content.Intent(requireContext(), VideoPlayerActivity::class.java)
-                intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
-                intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_TITLE, video.vod_name)
-                intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, playUrl)
+                // 跳转到视频详情页面
+                val intent = android.content.Intent(requireContext(), VideoDetailActivity::class.java)
+                intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
+                intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_TITLE, video.vod_name)
                 startActivity(intent)
             } catch (e: Exception) {
-                Log.e(TAG, "Error opening video player", e)
-                Toast.makeText(requireContext(), "打开播放器失败：${e.message}", Toast.LENGTH_SHORT).show()
+                Log.e(TAG, "Error opening video detail", e)
+                Toast.makeText(requireContext(), "打开详情页失败：${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
-    }
-    
-    /**
-     * 解析第一个剧集的播放 URL
-     */
-    private fun parseFirstEpisodeUrl(playUrl: String): String {
-        if (playUrl.isEmpty()) {
-            return ""
-        }
-        try {
-            val episodes = playUrl.split("#")
-            if (episodes.isNotEmpty()) {
-                val firstEpisode = episodes[0]
-                val parts = firstEpisode.split("$")
-                if (parts.size >= 2) {
-                    return parts[1]
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error parsing play URL", e)
-        }
-        return ""
     }
     
     private fun observeViewModel() {
