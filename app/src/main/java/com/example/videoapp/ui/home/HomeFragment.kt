@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import com.example.videoapp.databinding.FragmentHomeBinding
+import com.example.videoapp.ui.detail.VideoDetailActivity
 
 class HomeFragment : Fragment() {
     
@@ -64,7 +65,18 @@ class HomeFragment : Fragment() {
     private fun setupSectionAdapter() {
         Log.d(TAG, "Setting up section adapter")
         sectionAdapter = HomeSectionAdapter { video ->
-            Log.d(TAG, "Video clicked: ${video.vod_name}")
+            try {
+                Log.d(TAG, "Video clicked: ${video.vod_name}")
+                
+                // 跳转到视频详情页面
+                val intent = android.content.Intent(requireContext(), VideoDetailActivity::class.java)
+                intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
+                intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_TITLE, video.vod_name)
+                startActivity(intent)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error opening video detail", e)
+                Toast.makeText(requireContext(), "打开详情页失败：${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
         // 注意：这里我们不使用 RecyclerView，而是动态添加区块
     }
@@ -120,7 +132,18 @@ class HomeFragment : Fragment() {
             )
             
             val videoAdapter = HomeSectionVideoAdapter(section.videos) { video ->
-                Log.d(TAG, "Video clicked: ${video.vod_name}")
+                try {
+                    Log.d(TAG, "Video clicked: ${video.vod_name}")
+                    
+                    // 跳转到视频详情页面
+                    val intent = android.content.Intent(requireContext(), VideoDetailActivity::class.java)
+                    intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
+                    intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_TITLE, video.vod_name)
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error opening video detail", e)
+                    Toast.makeText(requireContext(), "打开详情页失败：${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
             recyclerView.adapter = videoAdapter
             
