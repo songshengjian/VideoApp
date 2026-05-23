@@ -16,10 +16,9 @@ import com.example.videoapp.R
 import com.example.videoapp.data.api.ApiClient
 import com.example.videoapp.data.model.Video
 import com.example.videoapp.databinding.ActivityVideoDetailBinding
+import com.example.videoapp.ui.player.Episode
+import com.example.videoapp.ui.player.PlaySource
 import com.example.videoapp.ui.player.VideoPlayerActivity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class VideoDetailActivity : AppCompatActivity() {
     
@@ -414,7 +413,7 @@ class VideoDetailActivity : AppCompatActivity() {
     // 从播放器返回时，可能更新选集状态
     override fun onResume() {
         super.onResume()
-        // 如果需要从播放器更新当前播放进度，可以在这里处理
+    // 如果需要从播放器更新当前播放进度，可以在这里处理
     }
     
     companion object {
@@ -423,12 +422,6 @@ class VideoDetailActivity : AppCompatActivity() {
         const val REQUEST_CODE_PLAY = 1001
     }
 }
-
-data class PlaySource(
-    val name: String,
-    val episodes: List<Episode>,
-    var status: Int = 0  // 0=待检测, 1=成功, 2=失败
-)
 
 data class Episode(
     val name: String,
