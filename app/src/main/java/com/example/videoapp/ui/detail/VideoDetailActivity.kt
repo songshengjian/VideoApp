@@ -228,10 +228,18 @@ class VideoDetailActivity : AppCompatActivity() {
     
     private fun parsePlaySources(playFrom: String, playUrl: String): MutableList<PlaySource> {
         val sources = mutableListOf<PlaySource>()
-        if (playFrom.isEmpty() || playUrl.isEmpty()) return sources
+        if (playFrom.isEmpty() || playUrl.isEmpty()) {
+            Log.d(TAG, "播放源为空: playFrom=$playFrom, playUrl=$playUrl")
+            return sources
+        }
+        
+        Log.d(TAG, "解析播放源原始数据: playFrom=$playFrom")
+        Log.d(TAG, "解析播放源原始数据: playUrl=$playUrl")
         
         val sourceNames = playFrom.split("$$$").map { it.trim() }
         val sourceUrls = playUrl.split("$$$").map { it.trim() }
+        
+        Log.d(TAG, "解析出 ${sourceNames.size} 个播放源名称, ${sourceUrls.size} 个URL")
         
         val count = minOf(sourceNames.size, sourceUrls.size)
         for (i in 0 until count) {
@@ -253,8 +261,10 @@ class VideoDetailActivity : AppCompatActivity() {
             }
             
             sources.add(PlaySource(name, episodes, 0))
+            Log.d(TAG, "添加播放源: $name, 剧集数: ${episodes.size}")
         }
         
+        Log.d(TAG, "最终解析出 ${sources.size} 个播放源")
         return sources
     }
     
