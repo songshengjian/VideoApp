@@ -21,7 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.videoapp.R
 import com.example.videoapp.data.api.ApiClient
-import com.example.videoapp.data.api.AdsResponse
+import com.example.videoapp.data.model.AdsResponse
 import com.example.videoapp.data.repository.VideoRepository
 import com.example.videoapp.databinding.ActivityVideoPlayerBinding
 import kotlinx.coroutines.CoroutineScope
