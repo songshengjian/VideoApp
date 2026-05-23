@@ -148,3 +148,29 @@ data class RegisterRequest(
     val user_email: String = "",
     val user_phone: String = ""
 )
+
+data class VideoSearchResponse(
+    val code: Int,
+    val msg: String,
+    val list: List<Video> = emptyList(),
+    val total: Int = 0,
+    val page: Int = 1,
+    val pagecount: Int = 1,
+    val searched_channels: List<String> = emptyList()
+)
+
+data class AdsResponse(
+    val top: AdConfig,
+    val bottom: AdConfig,
+    val left: AdConfig,
+    val right: AdConfig,
+    val video_top: AdConfig,
+    val video_bottom: AdConfig
+)
+
+data class AdConfig(
+    val enabled: Boolean,
+    val content: String,
+    val width: Int,
+    val height: Int
+)

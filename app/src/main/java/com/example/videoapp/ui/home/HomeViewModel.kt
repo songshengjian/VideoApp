@@ -41,9 +41,6 @@ class HomeViewModel : ViewModel() {
                 Pair(5, "热播短剧")
             )
             
-            var hasError = false
-            var errorMessage = ""
-            
             categories.forEach { (typeId, name) ->
                 try {
                     val result = repository.getCategoryVideos(typeId = typeId, page = 1)
