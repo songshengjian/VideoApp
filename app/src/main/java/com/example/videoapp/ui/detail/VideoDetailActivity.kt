@@ -80,8 +80,8 @@ class VideoDetailActivity : AppCompatActivity() {
             startPlayback()
         }
         
-        // 设置播放源列表
-        binding.recyclerViewSources.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        // 设置播放源列表（纵向）
+        binding.recyclerViewSources.layoutManager = LinearLayoutManager(this)
         
         // 设置集列表
         binding.recyclerViewEpisodes.layoutManager = LinearLayoutManager(this)
