@@ -43,6 +43,7 @@ class VideoDetailActivity : AppCompatActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.e(TAG, "=== VideoDetailActivity 启动 === videoId=$videoId")
         
         try {
             binding = ActivityVideoDetailBinding.inflate(layoutInflater)
@@ -54,9 +55,10 @@ class VideoDetailActivity : AppCompatActivity() {
                     finish()
                 }
             })
-            
+
             videoId = intent.getStringExtra(EXTRA_VIDEO_ID) ?: ""
             videoTitle = intent.getStringExtra(EXTRA_VIDEO_TITLE) ?: ""
+            Log.e(TAG, "=== 获取到 videoId: $videoId, videoTitle: $videoTitle ===")
             
             binding.textViewAppBarTitle.text = videoTitle
             
