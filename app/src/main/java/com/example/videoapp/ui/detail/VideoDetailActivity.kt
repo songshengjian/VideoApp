@@ -345,8 +345,3 @@ class VideoDetailActivity : AppCompatActivity() {
         const val REQUEST_CODE_PLAY = 1001
     }
 }
-
-data class Episode(
-    val name: String,
-    val url: String
-)

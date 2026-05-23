@@ -76,21 +76,3 @@ class HomeViewModel : ViewModel() {
         }
     }
 }
-                    }.onFailure { exception ->
-                        // 单个分类失败不影响其他分类
-                    }
-                } catch (e: Exception) {
-                    // 忽略单个分类错误
-                }
-            }
-            
-            if (sectionList.isEmpty()) {
-                _error.value = "加载首页数据失败"
-            } else {
-                _sections.value = sectionList
-            }
-            
-            _isLoading.value = false
-        }
-    }
-}
