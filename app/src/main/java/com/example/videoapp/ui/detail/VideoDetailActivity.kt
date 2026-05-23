@@ -116,26 +116,6 @@ class VideoDetailActivity : AppCompatActivity() {
             }
         }
     }
-        
-        // 播放按钮
-        binding.buttonPlay.setOnClickListener {
-            startPlayback()
-        }
-        
-        // 设置播放源列表（纵向）
-        binding.recyclerViewSources.layoutManager = LinearLayoutManager(this)
-        
-        // 设置集列表
-        binding.recyclerViewEpisodes.layoutManager = LinearLayoutManager(this)
-        
-        // 弹窗中的播放源列表
-        binding.recyclerViewPopupSources.layoutManager = LinearLayoutManager(this)
-        
-        // 关闭弹窗按钮
-        binding.buttonClosePopupSource.setOnClickListener {
-            hideSourcePopup()
-        }
-    }
     
     private fun showSourcePopup() {
         binding.popupSource.visibility = View.VISIBLE
