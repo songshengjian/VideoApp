@@ -138,9 +138,14 @@ class VideoDetailActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful && response.body() != null) {
                         val videoList = response.body()!!.list
-                        // 找到匹配的视频（通过ID或名称）
-                        val video = videoList.find { it.vod_id.toString() == videoId } 
-                            ?: videoList.firstOrNull()
+                        // 优先找匹配ID的正片，其次用第一个非预告片
+                        var video = videoList.find { it.vod_id.toString() == videoId && !it.vod_name.contains("预告片") }
+                        if (video == null) {
+                            video = videoList.find { !it.vod_name.contains("预告片") }
+                        }
+                        if (video == null) {
+                            video = videoList.firstOrNull()
+                        }
                         
                         if (video != null) {
                             currentVideo = video
