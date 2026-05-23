@@ -2,11 +2,22 @@ package com.example.videoapp.data.repository
 
 import com.example.videoapp.data.api.ApiClient
 import com.example.videoapp.data.model.*
-import java.lang.Exception
+import java.net.UnknownHostException
+import java.net.SocketTimeoutException
+import java.io.IOException
 
 class VideoRepository {
     
     private val api = ApiClient.videoApi
+    
+    private fun handleNetworkError(e: Exception): Exception {
+        return when (e) {
+            is UnknownHostException -> Exception("无法连接到服务器，请检查网络连接")
+            is SocketTimeoutException -> Exception("连接服务器超时，请稍后重试")
+            is IOException -> Exception("网络连接失败，请检查网络设置")
+            else -> Exception("网络异常：${e.message}")
+        }
+    }
     
     suspend fun getHomeVideos(): Result<List<Video>> {
         return try {
@@ -17,7 +28,7 @@ class VideoRepository {
                 Result.failure(Exception("获取首页数据失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(handleNetworkError(e))
         }
     }
     
@@ -30,7 +41,7 @@ class VideoRepository {
                 Result.failure(Exception("获取分类失败：${response.code()}"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(handleNetworkError(e))
         }
     }
     
@@ -43,7 +54,7 @@ class VideoRepository {
                 Result.failure(Exception("获取视频列表失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(handleNetworkError(e))
         }
     }
     
@@ -65,7 +76,7 @@ class VideoRepository {
                 Result.failure(Exception("搜索失败：${response.code()}"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(handleNetworkError(e))
         }
     }
     
@@ -78,7 +89,7 @@ class VideoRepository {
                 Result.failure(Exception("获取视频详情失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(handleNetworkError(e))
         }
     }
     
@@ -100,7 +111,7 @@ class VideoRepository {
                 Result.failure(Exception("获取视频详情失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(handleNetworkError(e))
         }
     }
     
@@ -113,7 +124,7 @@ class VideoRepository {
                 Result.failure(Exception("获取广告配置失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(handleNetworkError(e))
         }
     }
     
@@ -130,7 +141,7 @@ class VideoRepository {
                 Result.failure(Exception(response.body()?.msg ?: "登录失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(handleNetworkError(e))
         }
     }
     
@@ -147,7 +158,7 @@ class VideoRepository {
                 Result.failure(Exception(response.body()?.msg ?: "注册失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(handleNetworkError(e))
         }
     }
 }
