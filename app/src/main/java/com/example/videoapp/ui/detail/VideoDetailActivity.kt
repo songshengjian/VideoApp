@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.videoapp.R
 import com.example.videoapp.data.api.ApiClient
-import com.example.videoapp.data.api.AdsResponse
 import com.example.videoapp.data.model.Video
 import com.example.videoapp.databinding.ActivityVideoDetailBinding
 import com.example.videoapp.ui.player.VideoPlayerActivity
@@ -38,9 +37,6 @@ class VideoDetailActivity : AppCompatActivity() {
     private var sourceAdapter: SourceAdapter? = null
     private var episodeAdapter: EpisodeAdapter? = null
     private var popupSourceAdapter: SourceAdapter? = null
-    
-    // 广告配置
-    private var adsConfig: AdsResponse? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -109,14 +105,11 @@ class VideoDetailActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val result = VideoRepository().getAds()
-                withContext(Dispatchers.Main) {
-                    result.onSuccess { config ->
-                        adsConfig = config
-                        Log.d(TAG, "广告配置加载成功")
-                        // 详情页暂时没有广告位，预留接口
-                    }.onFailure {
-                        Log.w(TAG, "广告配置加载失败：${it.message}")
-                    }
+                result.onSuccess { config ->
+                    Log.d(TAG, "广告配置加载成功：${config.video_bottom.enabled}")
+                    // 详情页暂时没有广告位，预留接口
+                }.onFailure {
+                    Log.w(TAG, "广告配置加载失败：${it.message}")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "广告配置加载异常", e)
