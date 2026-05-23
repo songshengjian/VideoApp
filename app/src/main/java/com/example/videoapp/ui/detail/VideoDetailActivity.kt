@@ -176,6 +176,11 @@ class VideoDetailActivity : AppCompatActivity() {
                             if (content.length > 200) {
                                 content = content.substring(0, 200) + "..."
                             }
+                            // 添加调试信息
+                            if (video.debug_channels.isNotEmpty()) {
+                                val debugInfo = video.debug_channels.entries.joinToString(", ") { "${it.key}:${it.value}" }
+                                content += "\n\n[调试] 渠道统计: $debugInfo"
+                            }
                             binding.textViewVideoDesc.text = "简介：$content"
                             
                             // 优先使用结构化的播放源数据（从 Web 端新版接口获取）

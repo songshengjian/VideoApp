@@ -74,7 +74,8 @@ data class Video(
     val vod_rel_vod: String = "",
     val vod_rel_art: String = "",
     val vod_content_status: String = "",
-    @SerializedName("play_sources") val play_sources: List<PlaySourceData> = emptyList()
+    @SerializedName("play_sources") val play_sources: List<PlaySourceData> = emptyList(),
+    @SerializedName("debug_channels") val debug_channels: Map<String, Int> = emptyMap()
 )
 
 data class PlaySourceData(
