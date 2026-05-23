@@ -138,7 +138,16 @@ class VideoDetailActivity : AppCompatActivity() {
                         
                         if (body.code == 1 && body.list.isNotEmpty()) {
                             val video = body.list.first()
-                            Toast.makeText(this@VideoDetailActivity, "播放源：${video.play_sources.size}个", Toast.LENGTH_LONG).show()
+                            
+                            // 详细调试日志
+                            Log.d(TAG, "===== API 返回数据开始 =====")
+                            Log.d(TAG, "play_sources 数量：${video.play_sources.size}")
+                            Log.d(TAG, "vod_play_from: ${video.vod_play_from.take(200)}")
+                            Log.d(TAG, "vod_play_url: ${video.vod_play_url.take(200)}")
+                            Log.d(TAG, "debug_channels: ${video.debug_channels}")
+                            Log.d(TAG, "===== API 返回数据结束 =====")
+                            
+                            Toast.makeText(this@VideoDetailActivity, "play_sources:${video.play_sources.size}个，debug_channels:${video.debug_channels.size}个", Toast.LENGTH_LONG).show()
                             
                             currentVideo = video
                             binding.textViewVideoTitle.text = video.vod_name
@@ -153,13 +162,11 @@ class VideoDetailActivity : AppCompatActivity() {
                             }
                             binding.textViewVideoDesc.text = "简介：$content"
                             
-                            // 优先使用 vod_play_from 和 vod_play_url 解析所有播放源
-                            // 因为 play_sources 是后端过滤后的数据，可能不完整
-                            if (video.vod_play_from.isNotEmpty() && video.vod_play_url.isNotEmpty()) {
-                                playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
-                                Log.d(TAG, "解析播放源：${playSources.size} 个播放源")
-                            } else {
-                                playSources = video.play_sources.map { sourceData ->
+                            // 使用 play_sources 结构化数据（后端已聚合所有渠道）
+                            if (video.play_sources.isNotEmpty()) {
+                                Log.d(TAG, "使用 play_sources, 数量：${video.play_sources.size}")
+                                playSources = video.play_sources.mapIndexed { index, sourceData ->
+                                    Log.d(TAG, "[play_sources] 渠道${index + 1}: ${sourceData.channel} - ${sourceData.name}, 剧集数：${sourceData.episodes.size}")
                                     PlaySource(
                                         name = "${sourceData.channel} - ${sourceData.name}",
                                         episodes = sourceData.episodes.map { ep ->
@@ -168,8 +175,17 @@ class VideoDetailActivity : AppCompatActivity() {
                                         status = 0
                                     )
                                 }.toMutableList()
-                                Log.d(TAG, "使用结构化数据：${playSources.size} 个播放源")
+                                Log.d(TAG, "最终 playSources 数量：${playSources.size}")
+                            } else {
+                                // 备用方案：解析 vod_play_from 和 vod_play_url
+                                Log.d(TAG, "play_sources 为空，使用 parsePlaySources 解析")
+                                Log.d(TAG, "vod_play_from: ${video.vod_play_from}")
+                                Log.d(TAG, "vod_play_url length: ${video.vod_play_url.length}")
+                                playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
+                                Log.d(TAG, "parsePlaySources 返回数量：${playSources.size}")
                             }
+                            
+                            Toast.makeText(this@VideoDetailActivity, "最终播放源：${playSources.size}个", Toast.LENGTH_LONG).show()
                             
                             if (playSources.isNotEmpty()) {
                                 sourceAdapter = SourceAdapter(playSources, currentSourceIndex) { index ->
@@ -220,8 +236,13 @@ class VideoDetailActivity : AppCompatActivity() {
             return sources
         }
         
+        Log.d(TAG, "[parsePlaySources] playFrom: $playFrom")
+        Log.d(TAG, "[parsePlaySources] playUrl length: ${playUrl.length}")
+        
         val sourceNames = playFrom.split("$$$").map { it.trim() }
         val sourceUrls = playUrl.split("$$$").map { it.trim() }
+        
+        Log.d(TAG, "[parsePlaySources] 解析出 ${sourceNames.size} 个播放源名称")
         
         val count = minOf(sourceNames.size, sourceUrls.size)
         for (i in 0 until count) {
@@ -234,6 +255,7 @@ class VideoDetailActivity : AppCompatActivity() {
             
             if (urlStr.isNotEmpty()) {
                 val episodeParts = urlStr.split("#").filter { it.isNotEmpty() }
+                Log.d(TAG, "[parsePlaySources] 播放源 '$name' 有 ${episodeParts.size} 集")
                 for (part in episodeParts) {
                     val episodeData = part.split("$")
                     if (episodeData.size >= 2) {
@@ -244,11 +266,11 @@ class VideoDetailActivity : AppCompatActivity() {
             
             if (episodes.isNotEmpty()) {
                 sources.add(PlaySource(name, episodes, 0))
-                Log.d(TAG, "添加播放源：$name, 剧集数：${episodes.size}")
+                Log.d(TAG, "[parsePlaySources] 添加播放源：$name, 剧集数：${episodes.size}")
             }
         }
         
-        Log.d(TAG, "最终解析出 ${sources.size} 个播放源")
+        Log.d(TAG, "[parsePlaySources] 最终返回 ${sources.size} 个播放源")
         return sources
     }
     
