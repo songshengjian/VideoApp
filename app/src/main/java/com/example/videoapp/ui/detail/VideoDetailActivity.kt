@@ -161,15 +161,15 @@ class VideoDetailActivity : AppCompatActivity() {
                 // 使用多渠道聚合接口获取所有频道的视频数据（同步 Web 端 getVideoDetailAllChannels）
                 val response = ApiClient.videoApi.getVideoDetailAllChannels(videoId)
                 withContext(Dispatchers.Main) {
-                    Log.d(TAG, "API响应: code=${response.code()}, body=${response.body()}")
+                    Log.e(TAG, "=== API响应: code=${response.code()} ===")
                     
                     if (response.isSuccessful && response.body() != null) {
                         val body = response.body()!!
-                        Log.d(TAG, "返回数据: code=${body.code}, list.size=${body.list.size}")
+                        Log.e(TAG, "=== 返回数据: code=${body.code}, list.size=${body.list.size} ===")
                         
                         if (body.code == 1 && body.list.isNotEmpty()) {
                             val video = body.list.first()
-                            Log.d(TAG, "video.play_sources=${video.play_sources.size}, debug_channels=${video.debug_channels}")
+                            Log.e(TAG, "=== video.play_sources=${video.play_sources.size}, debug_channels=${video.debug_channels} ===")
                             
                             currentVideo = video
                             binding.textViewVideoTitle.text = video.vod_name
