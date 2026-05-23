@@ -32,6 +32,7 @@ data class Video(
     val vod_is_vip: Int = 0,
     val vod_play_from: String = "",
     val vod_play_url: String = "",
+    val vod_play_from_map: Map<String, String> = emptyMap(),
     val vod_down_from: String = "",
     val vod_down_url: String = "",
     val vod_plot: String = "",
