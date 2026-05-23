@@ -15,10 +15,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.videoapp.R
 import com.example.videoapp.data.api.ApiClient
 import com.example.videoapp.data.model.Video
+import com.example.videoapp.data.repository.VideoRepository
 import com.example.videoapp.databinding.ActivityVideoDetailBinding
 import com.example.videoapp.ui.player.Episode
 import com.example.videoapp.ui.player.PlaySource
 import com.example.videoapp.ui.player.VideoPlayerActivity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class VideoDetailActivity : AppCompatActivity() {
     
