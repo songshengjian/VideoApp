@@ -4,17 +4,12 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.videoapp.R
 import com.example.videoapp.data.api.ApiClient
-import com.example.videoapp.data.model.Video
 import com.example.videoapp.data.repository.VideoRepository
 import com.example.videoapp.databinding.ActivityVideoDetailBinding
 import com.example.videoapp.ui.player.Episode
@@ -31,7 +26,7 @@ class VideoDetailActivity : AppCompatActivity() {
     
     private var videoId: String = ""
     private var videoTitle: String = ""
-    private var currentVideo: Video? = null
+    private var currentVideo: com.example.videoapp.data.model.Video? = null
     
     private var playSources: MutableList<PlaySource> = mutableListOf()
     private var currentSourceIndex: Int = 0
@@ -47,13 +42,10 @@ class VideoDetailActivity : AppCompatActivity() {
         binding = ActivityVideoDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
-        // 用 Toast 显示收到的参数
         videoId = intent.getStringExtra(EXTRA_VIDEO_ID) ?: ""
         videoTitle = intent.getStringExtra(EXTRA_VIDEO_TITLE) ?: ""
-        Toast.makeText(this, "收到: id=$videoId, title=$videoTitle", Toast.LENGTH_LONG).show()
         
         try {
-            // 处理返回键
             onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
                     finish()
@@ -65,46 +57,34 @@ class VideoDetailActivity : AppCompatActivity() {
             loadAdsConfig()
             
         } catch (e: Exception) {
-            Toast.makeText(this, "错误: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "错误：${e.message}", Toast.LENGTH_LONG).show()
         }
     }
     
     private fun setupUI() {
-        // 返回按钮
         binding.buttonBack.setOnClickListener {
             finish()
         }
         
-        // 播放按钮
         binding.buttonPlay.setOnClickListener {
             startPlayback()
         }
         
-        // 设置播放源列表（纵向）
         binding.recyclerViewSources.layoutManager = LinearLayoutManager(this)
-        
-        // 设置剧集列表
         binding.recyclerViewEpisodes.layoutManager = LinearLayoutManager(this)
-        
-        // 弹窗中的播放源列表
         binding.recyclerViewPopupSources.layoutManager = LinearLayoutManager(this)
         
-        // 关闭弹窗按钮
         binding.buttonClosePopupSource.setOnClickListener {
             hideSourcePopup()
         }
     }
     
-    /**
-     * 加载广告配置
-     */
     private fun loadAdsConfig() {
         lifecycleScope.launch {
             try {
                 val result = VideoRepository().getAds()
                 result.onSuccess { config ->
                     Log.d(TAG, "广告配置加载成功：${config.video_bottom.enabled}")
-                    // 详情页暂时没有广告位，预留接口
                 }.onFailure {
                     Log.w(TAG, "广告配置加载失败：${it.message}")
                 }
@@ -129,7 +109,6 @@ class VideoDetailActivity : AppCompatActivity() {
                 sourceAdapter?.updateCurrentIndex(index)
                 popupSourceAdapter?.updateCurrentIndex(index)
                 hideSourcePopup()
-                // 自动开始播放
                 startPlayback()
                 Toast.makeText(this, "已切换到 ${source.name}", Toast.LENGTH_SHORT).show()
             }
@@ -150,21 +129,16 @@ class VideoDetailActivity : AppCompatActivity() {
             return
         }
         
-        Toast.makeText(this, "开始加载: id=$videoId", Toast.LENGTH_SHORT).show()
-        
         lifecycleScope.launch {
             try {
-                // 使用多渠道聚合接口获取所有频道的视频数据（同步 Web 端 getVideoDetailAllChannels）
                 val response = ApiClient.videoApi.getVideoDetailAllChannels(videoId)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@VideoDetailActivity, "API返回: code=${response.code()}", Toast.LENGTH_SHORT).show()
-                    
                     if (response.isSuccessful && response.body() != null) {
                         val body = response.body()!!
                         
                         if (body.code == 1 && body.list.isNotEmpty()) {
                             val video = body.list.first()
-                            Toast.makeText(this@VideoDetailActivity, "播放源: ${video.play_sources.size}个, 渠道:${video.debug_channels}", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this@VideoDetailActivity, "播放源：${video.play_sources.size}个", Toast.LENGTH_LONG).show()
                             
                             currentVideo = video
                             binding.textViewVideoTitle.text = video.vod_name
@@ -177,14 +151,8 @@ class VideoDetailActivity : AppCompatActivity() {
                             if (content.length > 200) {
                                 content = content.substring(0, 200) + "..."
                             }
-                            // 添加调试信息
-                            if (video.debug_channels.isNotEmpty()) {
-                                val debugInfo = video.debug_channels.entries.joinToString(", ") { "${it.key}:${it.value}" }
-                                content += "\n\n[调试] 渠道统计: $debugInfo"
-                            }
                             binding.textViewVideoDesc.text = "简介：$content"
                             
-                            // 优先使用结构化的播放源数据（从 Web 端新版接口获取）
                             if (video.play_sources.isNotEmpty()) {
                                 playSources = video.play_sources.map { sourceData ->
                                     PlaySource(
@@ -195,14 +163,12 @@ class VideoDetailActivity : AppCompatActivity() {
                                         status = 0
                                     )
                                 }.toMutableList()
-                                Log.d(TAG, "使用结构化数据: ${playSources.size} 个播放源")
+                                Log.d(TAG, "使用结构化数据：${playSources.size} 个播放源")
                             } else {
-                                // 回退到旧的解析方式
                                 playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
                             }
                             
                             if (playSources.isNotEmpty()) {
-                                // 创建播放源适配器
                                 sourceAdapter = SourceAdapter(playSources, currentSourceIndex) { index ->
                                     currentSourceIndex = index
                                     currentEpisodeIndex = 0
@@ -212,19 +178,16 @@ class VideoDetailActivity : AppCompatActivity() {
                                 }
                                 binding.recyclerViewSources.adapter = sourceAdapter
                                 
-                                // 创建剧集适配器
                                 episodeAdapter = EpisodeAdapter(playSources[currentSourceIndex].episodes, currentEpisodeIndex) { index ->
                                     currentEpisodeIndex = index
                                     episodeAdapter?.updateCurrentIndex(index)
                                 }
                                 binding.recyclerViewEpisodes.adapter = episodeAdapter
                                 
-                                // 直接显示播放源和选集列表（不弹窗）
                                 binding.layoutSources.visibility = View.VISIBLE
                                 binding.layoutEpisodes.visibility = View.VISIBLE
                                 binding.buttonPlay.visibility = View.VISIBLE
                                 
-                                // 检测所有播放源状态（异步）
                                 checkSourcesStatus()
                             } else {
                                 Toast.makeText(this@VideoDetailActivity, "暂无播放资源", Toast.LENGTH_SHORT).show()
@@ -254,13 +217,8 @@ class VideoDetailActivity : AppCompatActivity() {
             return sources
         }
         
-        Log.d(TAG, "解析播放源原始数据：playFrom=$playFrom")
-        Log.d(TAG, "解析播放源原始数据：playUrl=$playUrl")
-        
         val sourceNames = playFrom.split("$$$").map { it.trim() }
         val sourceUrls = playUrl.split("$$$").map { it.trim() }
-        
-        Log.d(TAG, "解析出 ${sourceNames.size} 个播放源名称，${sourceUrls.size} 个 URL")
         
         val count = minOf(sourceNames.size, sourceUrls.size)
         for (i in 0 until count) {
@@ -285,50 +243,10 @@ class VideoDetailActivity : AppCompatActivity() {
                 sources.add(PlaySource(name, episodes, 0))
                 Log.d(TAG, "添加播放源：$name, 剧集数：${episodes.size}")
             }
-            }
         }
         
         Log.d(TAG, "最终解析出 ${sources.size} 个播放源")
         return sources
-    }
-        
-        Log.d(TAG, "解析播放源原始数据: playFrom=$playFrom")
-        Log.d(TAG, "解析播放源原始数据: playUrl=$playUrl")
-        
-        val sourceNames = playFrom.split("$$$").map { it.trim() }
-        val sourceUrls = playUrl.split("$$$").map { it.trim() }
-        
-        Log.d(TAG, "解析出 ${sourceNames.size} 个播放源名称, ${sourceUrls.size} 个URL")
-        
-        val count = minOf(sourceNames.size, sourceUrls.size)
-        for (i in 0 until count) {
-            val name = sourceNames[i]
-            val urlStr = sourceUrls[i]
-            
-            if (name.isEmpty()) continue
-            
-            val episodes = mutableListOf<Episode>()
-            
-            if (urlStr.isNotEmpty()) {
-                val episodeParts = urlStr.split("#").filter { it.isNotEmpty() }
-                for (part in episodeParts) {
-                    val episodeData = part.split("$")
-                    if (episodeData.size >= 2) {
-                        episodes.add(Episode(episodeData[0].trim(), episodeData[1].trim()))
-                    }
-                }
-            }
-            
-            sources.add(PlaySource(name, episodes, 0))
-            Log.d(TAG, "添加播放源: $name, 剧集数: ${episodes.size}")
-        }
-        
-        Log.d(TAG, "最终解析出 ${sources.size} 个播放源")
-        return sources
-    }
-    
-    private fun updateSourceList() {
-        sourceAdapter?.notifyDataSetChanged()
     }
     
     private fun checkSourcesStatus() {
@@ -363,16 +281,9 @@ class VideoDetailActivity : AppCompatActivity() {
         }
     }
     
-    private fun updateEpisodeList() {
-        if (currentSourceIndex < playSources.size) {
-            val episodes = playSources[currentSourceIndex].episodes
-            episodeAdapter?.updateList(episodes, currentEpisodeIndex)
-        }
-    }
-    
     private fun startPlayback() {
         if (videoId.isEmpty()) {
-            Toast.makeText(this, "视频ID为空", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "视频 ID 为空", Toast.LENGTH_SHORT).show()
             return
         }
         
@@ -389,27 +300,24 @@ class VideoDetailActivity : AppCompatActivity() {
         
         val episode = source.episodes[currentEpisodeIndex]
         
-        val intent = Intent(this, com.example.videoapp.ui.player.VideoPlayerActivity::class.java)
-        intent.putExtra(com.example.videoapp.ui.player.VideoPlayerActivity.EXTRA_VIDEO_ID, videoId)
-        intent.putExtra(com.example.videoapp.ui.player.VideoPlayerActivity.EXTRA_VIDEO_TITLE, videoTitle)
-        intent.putExtra(com.example.videoapp.ui.player.VideoPlayerActivity.EXTRA_VIDEO_URL, episode.url)
+        val intent = Intent(this, VideoPlayerActivity::class.java)
+        intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_ID, videoId)
+        intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_TITLE, videoTitle)
+        intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, episode.url)
         startActivityForResult(intent, REQUEST_CODE_PLAY)
     }
     
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_PLAY) {
-            // 从播放器返回时，显示播放源选择弹窗
             if (playSources.isNotEmpty()) {
                 showSourcePopup()
             }
         }
     }
     
-    // 从播放器返回时，可能更新选集状态
     override fun onResume() {
         super.onResume()
-    // 如果需要从播放器更新当前播放进度，可以在这里处理
     }
     
     companion object {
