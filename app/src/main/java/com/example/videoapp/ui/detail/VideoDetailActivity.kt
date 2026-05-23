@@ -151,7 +151,6 @@ class VideoDetailActivity : AppCompatActivity() {
                             }
                             binding.textViewVideoDesc.text = "简介：$content"
                             
-                            playFromMap = video.vod_play_from_map
                             playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
                             if (playSources.isNotEmpty()) {
                                 // 创建播放源适配器
@@ -199,25 +198,19 @@ class VideoDetailActivity : AppCompatActivity() {
         }
     }
     
-    private var playFromMap: Map<String, String> = emptyMap()
-    
     private fun parsePlaySources(playFrom: String, playUrl: String): MutableList<PlaySource> {
         val sources = mutableListOf<PlaySource>()
         if (playFrom.isEmpty() || playUrl.isEmpty()) return sources
         
-        // 不过滤空字符串，保留所有播放源
         val sourceNames = playFrom.split("$$$").map { it.trim() }
         val sourceUrls = playUrl.split("$$$").map { it.trim() }
         
         val count = minOf(sourceNames.size, sourceUrls.size)
         for (i in 0 until count) {
-            val rawName = sourceNames[i]
+            val name = sourceNames[i]
             val urlStr = sourceUrls[i]
             
-            if (rawName.isEmpty()) continue
-            
-            // 使用映射获取显示名称，如果没有映射则使用原始名称
-            val displayName = playFromMap[rawName] ?: rawName
+            if (name.isEmpty()) continue
             
             val episodes = mutableListOf<Episode>()
             
@@ -231,7 +224,7 @@ class VideoDetailActivity : AppCompatActivity() {
                 }
             }
             
-            sources.add(PlaySource(displayName, episodes, 0))
+            sources.add(PlaySource(name, episodes, 0))
         }
         
         return sources
