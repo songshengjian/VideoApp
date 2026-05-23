@@ -133,10 +133,15 @@ class VideoDetailActivity : AppCompatActivity() {
         
         lifecycleScope.launch {
             try {
-                val response = ApiClient.videoApi.getVideoDetailAllChannels(videoId)
+                // 使用搜索接口获取所有渠道的视频数据
+                val response = ApiClient.videoApi.searchVideosForDetail(videoTitle)
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful && response.body() != null) {
-                        val video = response.body()!!.list.firstOrNull()
+                        val videoList = response.body()!!.list
+                        // 找到匹配的视频（通过ID或名称）
+                        val video = videoList.find { it.vod_id.toString() == videoId } 
+                            ?: videoList.firstOrNull()
+                        
                         if (video != null) {
                             currentVideo = video
                             binding.textViewVideoTitle.text = video.vod_name

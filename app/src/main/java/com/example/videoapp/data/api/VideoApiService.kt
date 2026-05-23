@@ -34,9 +34,9 @@ interface VideoApiService {
         @Query("ids") ids: String
     ): Response<VideoResponse>
     
-    @GET("/api/video/detail-all")
-    suspend fun getVideoDetailAllChannels(
-        @Query("ids") ids: String
+    @GET("/api/video/search")
+    suspend fun searchVideosForDetail(
+        @Query("wd") keyword: String
     ): Response<VideoResponse>
     
     @POST("/api/user/login")
