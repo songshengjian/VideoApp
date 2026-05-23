@@ -6,15 +6,27 @@ import retrofit2.http.*
 
 interface VideoApiService {
     
+    /**
+     * 获取首页推荐视频
+     * Web 端对应接口：IndexController::getVideoList
+     */
     @GET("/api/video/list")
     suspend fun getHomeVideos(
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 20
     ): Response<VideoResponse>
     
+    /**
+     * 获取分类列表（支持层级分类）
+     * Web 端对应接口：IndexController::getVideoTypes
+     */
     @GET("/api/video/type")
     suspend fun getCategories(): Response<CategoryResponse>
     
+    /**
+     * 获取分类视频列表
+     * Web 端对应接口：IndexController::getVideoList
+     */
     @GET("/api/video/list")
     suspend fun getCategoryVideos(
         @Query("type_id") typeId: Int,
@@ -22,22 +34,41 @@ interface VideoApiService {
         @Query("limit") limit: Int = 20
     ): Response<VideoResponse>
     
+    /**
+     * 搜索视频（多频道聚合搜索）
+     * Web 端对应接口：IndexController::searchVideos
+     */
     @GET("/api/video/search")
     suspend fun searchVideos(
         @Query("wd") keyword: String,
         @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 20
-    ): Response<VideoResponse>
+        @Query("limit") limit: Int = 100
+    ): Response<VideoSearchResponse>
     
+    /**
+     * 获取视频详情（单频道）
+     * Web 端对应接口：IndexController::getVideoDetail
+     */
     @GET("/api/video/detail")
     suspend fun getVideoDetail(
         @Query("ids") ids: String
     ): Response<VideoResponse>
     
-    @GET("/api/video/search")
-    suspend fun searchVideosForDetail(
-        @Query("wd") keyword: String
+    /**
+     * 获取视频详情（所有频道聚合）
+     * Web 端对应接口：IndexController::getVideoDetailAllChannels
+     */
+    @GET("/api/video/detail_all")
+    suspend fun getVideoDetailAllChannels(
+        @Query("ids") ids: String
     ): Response<VideoResponse>
+    
+    /**
+     * 获取广告配置
+     * Web 端对应接口：IndexController::getAds
+     */
+    @GET("/api/ads")
+    suspend fun getAds(): Response<AdsResponse>
     
     @POST("/api/user/login")
     @FormUrlEncoded
@@ -54,6 +85,38 @@ interface VideoApiService {
         @Field("user_email") email: String = ""
     ): Response<LoginResponse>
 }
+
+/**
+ * 搜索响应（多频道聚合）
+ */
+data class VideoSearchResponse(
+    val code: Int,
+    val msg: String,
+    val list: List<Video> = emptyList(),
+    val total: Int = 0,
+    val page: Int = 1,
+    val pagecount: Int = 1,
+    val searched_channels: List<String> = emptyList()
+)
+
+/**
+ * 广告配置响应
+ */
+data class AdsResponse(
+    val top: AdConfig,
+    val bottom: AdConfig,
+    val left: AdConfig,
+    val right: AdConfig,
+    val video_top: AdConfig,
+    val video_bottom: AdConfig
+)
+
+data class AdConfig(
+    val enabled: Boolean,
+    val content: String,
+    val width: Int,
+    val height: Int
+)
 
 data class LoginResponse(
     val code: Int,

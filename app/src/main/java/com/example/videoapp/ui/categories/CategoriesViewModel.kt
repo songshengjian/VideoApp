@@ -16,6 +16,9 @@ class CategoriesViewModel : ViewModel() {
     private val _categories = MutableLiveData<List<Category>>()
     val categories: LiveData<List<Category>> = _categories
     
+    private val _hierarchicalCategories = MutableLiveData<List<Category>>()
+    val hierarchicalCategories: LiveData<List<Category>> = _hierarchicalCategories
+    
     private val _videos = MutableLiveData<List<Video>>()
     val videos: LiveData<List<Video>> = _videos
     
@@ -25,14 +28,20 @@ class CategoriesViewModel : ViewModel() {
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
     
+    /**
+     * 加载分类列表（支持层级分类）
+     */
     fun loadCategories() {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             
             repository.getCategories()
-                .onSuccess { categories ->
-                    _categories.value = categories
+                .onSuccess { response ->
+                    _categories.value = response.class_
+                    // 同步层级分类结构（Web 端有 tree 字段）
+                    // 这里使用 parentId 字段来构建层级
+                    _hierarchicalCategories.value = buildHierarchicalCategories(response.class_)
                 }
                 .onFailure { exception ->
                     _error.value = exception.message
@@ -60,5 +69,33 @@ class CategoriesViewModel : ViewModel() {
             
             _isLoading.value = false
         }
+    }
+    
+    /**
+     * 构建层级分类结构
+     */
+    private fun buildHierarchicalCategories(flatCategories: List<Category>): List<Category> {
+        val parentMap = mutableMapOf<Int, Category>()
+        val childrenMap = mutableMapOf<Int, MutableList<Category>>()
+        
+        // 分离父分类和子分类
+        flatCategories.forEach { category ->
+            if (category.parent_id == 0 && category.channel_type_id > 0) {
+                // 这是父分类（大类）
+                parentMap[category.type_id] = category.copy(children = mutableListOf())
+            } else if (category.parent_id > 0) {
+                // 这是子分类
+                childrenMap.getOrPut(category.parent_id) { mutableListOf() }.add(category)
+            }
+        }
+        
+        // 将子分类添加到父分类的 children 列表中
+        parentMap.forEach { (parentId, parent) ->
+            childrenMap[parentId]?.let { children ->
+                parentMap[parentId] = parent.copy(children = children)
+            }
+        }
+        
+        return parentMap.values.toList()
     }
 }

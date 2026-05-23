@@ -77,6 +77,24 @@
             android:visibility="gone" />
     </LinearLayout>
 
+    <!-- 视频底部广告位 -->
+    <FrameLayout
+        android:id="@+id/ad_container_video_bottom"
+        android:layout_width="0dp"
+        android:layout_height="120dp"
+        android:background="#88000000"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/layout_bottom_bar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <WebView
+            android:id="@+id/webview_video_bottom_ad"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent" />
+    </FrameLayout>
+
     <!-- 底部控制栏 (选集) -->
     <LinearLayout
         android:id="@+id/layout_bottom_bar"

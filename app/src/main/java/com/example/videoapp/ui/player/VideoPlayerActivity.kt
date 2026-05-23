@@ -43,6 +43,9 @@ class VideoPlayerActivity : AppCompatActivity() {
     private var currentSourceIndex: Int = 0
     private var isControlsVisible = false
     
+    // 广告相关
+    private var bottomAdEnabled = false
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -74,6 +77,9 @@ class VideoPlayerActivity : AppCompatActivity() {
             
             setupUI()
             setupPlayer(currentVideoUrl)
+            
+            // 加载广告配置
+            loadAdsConfig()
             
             if (videoId.isNotEmpty()) {
                 loadVideoDetail(videoId)
@@ -359,6 +365,48 @@ class VideoPlayerActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Error playing video: ${e.message}", e)
             Toast.makeText(this, "播放失败：${e.message ?: "未知错误"}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 加载广告配置
+     */
+    private fun loadAdsConfig() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val repository = com.example.videoapp.data.repository.VideoRepository()
+                val result = repository.getAds()
+                withContext(Dispatchers.Main) {
+                    result.onSuccess { ads ->
+                        // 底部广告位
+                        val bottomAd = ads.video_bottom
+                        if (bottomAd.enabled && bottomAd.content.isNotEmpty()) {
+                            bottomAdEnabled = true
+                            binding.adContainerVideoBottom.visibility = View.VISIBLE
+                            binding.webviewVideoBottomAd.loadDataWithBaseURL(
+                                null,
+                                bottomAd.content,
+                                "text/html",
+                                "UTF-8",
+                                null
+                            )
+                            Log.d(TAG, "底部广告已加载")
+                        } else {
+                            bottomAdEnabled = false
+                            binding.adContainerVideoBottom.visibility = View.GONE
+                            Log.d(TAG, "底部广告未启用或内容为空")
+                        }
+                    }.onFailure {
+                        Log.w(TAG, "广告配置加载失败：${it.message}")
+                        // 默认隐藏广告位
+                        binding.adContainerVideoBottom.visibility = View.GONE
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "广告配置加载异常", e)
+                // 异常时隐藏广告位
+                binding.adContainerVideoBottom.visibility = View.GONE
+            }
         }
     }
     

@@ -85,21 +85,42 @@ class SearchFragment : Fragment() {
     }
     
     private fun observeViewModel() {
-        viewModel.videos.observe(viewLifecycleOwner, Observer { videos ->
-            videos?.let {
+        viewModel.videos.observe(viewLifecycleOwner) { videos ->
+            videos.let {
                 (binding.recyclerViewSearch.adapter as? VideoAdapter)?.submitList(it)
             }
-        })
+        }
         
-        viewModel.isLoading.observe(viewLifecycleOwner, Observer { isLoading ->
+        viewModel.searchedChannels.observe(viewLifecycleOwner) { channels ->
+            channels.let {
+                if (it.isNotEmpty()) {
+                    val channelInfo = "已搜索 ${it.size} 个频道：${it.joinToString("、").take(50)}${if (it.size > 5) "等" else ""}"
+                    binding.textViewSearchInfo.text = channelInfo
+                    binding.textViewSearchInfo.visibility = View.VISIBLE
+                } else {
+                    binding.textViewSearchInfo.visibility = View.GONE
+                }
+            }
+        }
+        
+        viewModel.total.observe(viewLifecycleOwner) { total ->
+            if (total > 0) {
+                binding.textViewResultCount.text = "共找到 $total 个结果"
+                binding.textViewResultCount.visibility = View.VISIBLE
+            } else {
+                binding.textViewResultCount.visibility = View.GONE
+            }
+        }
+        
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.progressBarSearch.visibility = if (isLoading) View.VISIBLE else View.GONE
-        })
+        }
         
-        viewModel.error.observe(viewLifecycleOwner, Observer { error ->
+        viewModel.error.observe(viewLifecycleOwner) { error ->
             error?.let {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
             }
-        })
+        }
     }
     
     override fun onDestroyView() {

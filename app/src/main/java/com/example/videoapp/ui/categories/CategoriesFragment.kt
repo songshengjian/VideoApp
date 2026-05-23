@@ -29,14 +29,8 @@ class CategoriesFragment : Fragment() {
     private var unifiedTypeId: Int = 0
     private var currentChildTypeId: Int = 0
     
-    // 大类对应的子类列表
-    private val childCategories = mapOf(
-        1 to listOf(Pair(0, "全部"), Pair(101, "动作片"), Pair(102, "喜剧片"), Pair(103, "爱情片"), Pair(104, "科幻片"), Pair(105, "恐怖片"), Pair(106, "剧情片"), Pair(107, "战争片"), Pair(108, "纪录片")),
-        2 to listOf(Pair(0, "全部"), Pair(201, "国产剧"), Pair(202, "港台剧"), Pair(203, "日韩剧"), Pair(204, "欧美剧"), Pair(205, "其他剧")),
-        3 to listOf(Pair(0, "全部"), Pair(301, "大陆综艺"), Pair(302, "港台综艺"), Pair(303, "日韩综艺"), Pair(304, "欧美综艺")),
-        4 to listOf(Pair(0, "全部"), Pair(401, "国产动漫"), Pair(402, "日韩动漫"), Pair(403, "欧美动漫"), Pair(404, "港台动漫"), Pair(405, "其他动漫")),
-        5 to listOf(Pair(0, "全部"), Pair(501, "古装短剧"), Pair(502, "现代短剧"), Pair(503, "都市短剧"))
-    )
+    // 当前大类的子分类列表（动态从 API 加载）
+    private var currentChildCategories: List<Pair<Int, String>> = listOf(Pair(0, "全部"))
     
     companion object {
         private const val ARG_TYPE_ID = "type_id"
@@ -73,8 +67,10 @@ class CategoriesFragment : Fragment() {
         Log.d(TAG, "Fragment onViewCreated, typeId: $unifiedTypeId")
         
         setupRecyclerView()
-        setupChildNavigation()
         observeViewModel()
+        
+        // 加载分类列表并构建子导航
+        viewModel.loadCategories()
         
         // 加载该大类的子类视频（默认加载"全部"）
         if (unifiedTypeId > 0) {
@@ -105,7 +101,8 @@ class CategoriesFragment : Fragment() {
         val container = binding.childNavContainer
         container.removeAllViews()
         
-        val children = childCategories[unifiedTypeId] ?: listOf(Pair(0, "全部"))
+        // 使用动态加载的子分类，如果没有则使用默认"全部"
+        val children = currentChildCategories
         
         children.forEachIndexed { index, pair ->
             val (childTypeId, name) = pair
@@ -165,22 +162,41 @@ class CategoriesFragment : Fragment() {
     }
     
     private fun observeViewModel() {
+        // 观察分类列表数据，构建子导航
+        viewModel.hierarchicalCategories.observe(viewLifecycleOwner) { hierarchicalCats ->
+            hierarchicalCats?.let { cats ->
+                // 找到当前大类对应的子分类
+                val parentCategory = cats.find { it.type_id == unifiedTypeId }
+                if (parentCategory != null && parentCategory.children.isNotEmpty()) {
+                    // 有子分类，构建导航列表
+                    currentChildCategories = listOf(Pair(0, "全部")) + parentCategory.children.map { 
+                        Pair(it.type_id, it.type_name) 
+                    }
+                    setupChildNavigation()
+                } else {
+                    // 没有子分类，只显示"全部"
+                    currentChildCategories = listOf(Pair(0, "全部"))
+                    setupChildNavigation()
+                }
+            }
+        }
+        
         // 观察分类视频数据
-        viewModel.videos.observe(viewLifecycleOwner, Observer { videos ->
+        viewModel.videos.observe(viewLifecycleOwner) { videos ->
             videos?.let {
                 (binding.recyclerViewCategories.adapter as? VideoAdapter)?.submitList(it)
             }
-        })
+        }
         
-        viewModel.isLoading.observe(viewLifecycleOwner, Observer { isLoading ->
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.progressBarCategories.visibility = if (isLoading) View.VISIBLE else View.GONE
-        })
+        }
         
-        viewModel.error.observe(viewLifecycleOwner, Observer { error ->
+        viewModel.error.observe(viewLifecycleOwner) { error ->
             error?.let {
                 Toast.makeText(requireContext(), "加载失败：$it", Toast.LENGTH_SHORT).show()
             }
-        })
+        }
     }
     
     override fun onDestroyView() {

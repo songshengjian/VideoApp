@@ -21,11 +21,11 @@ class VideoRepository {
         }
     }
     
-    suspend fun getCategories(): Result<List<Category>> {
+    suspend fun getCategories(): Result<CategoryResponse> {
         return try {
             val response = api.getCategories()
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!.class_)
+                Result.success(response.body()!!)
             } else {
                 Result.failure(Exception("获取分类失败：${response.code()}"))
             }
@@ -47,13 +47,22 @@ class VideoRepository {
         }
     }
     
-    suspend fun searchVideos(keyword: String, page: Int = 1): Result<List<Video>> {
+    /**
+     * 搜索视频（多频道聚合）
+     * 同步 Web 端 IndexController::searchVideos 逻辑
+     */
+    suspend fun searchVideos(keyword: String, page: Int = 1): Result<VideoSearchResponse> {
         return try {
             val response = api.searchVideos(keyword = keyword, page = page)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!.list)
+                val body = response.body()!!
+                if (body.code == 1) {
+                    Result.success(body)
+                } else {
+                    Result.failure(Exception(body.msg))
+                }
             } else {
-                Result.failure(Exception("搜索失败"))
+                Result.failure(Exception("搜索失败：${response.code()}"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -67,6 +76,41 @@ class VideoRepository {
                 Result.success(response.body()!!.list.firstOrNull())
             } else {
                 Result.failure(Exception("获取视频详情失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * 获取所有频道的视频详情（聚合模式）
+     * 同步 Web 端 IndexController::getVideoDetailAllChannels 逻辑
+     */
+    suspend fun getVideoDetailAllChannels(ids: String): Result<Video?> {
+        return try {
+            val response = api.getVideoDetailAllChannels(ids = ids)
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                if (body.code == 1) {
+                    Result.success(body.list.firstOrNull())
+                } else {
+                    Result.failure(Exception(body.msg))
+                }
+            } else {
+                Result.failure(Exception("获取视频详情失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun getAds(): Result<AdsResponse> {
+        return try {
+            val response = api.getAds()
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("获取广告配置失败"))
             }
         } catch (e: Exception) {
             Result.failure(e)

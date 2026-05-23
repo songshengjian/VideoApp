@@ -21,6 +21,10 @@ class HomeViewModel : ViewModel() {
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
     
+    /**
+     * 同步 Web 端首页推荐逻辑
+     * 从分类中获取推荐内容，并构建分区展示
+     */
     fun loadHomeVideos() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -45,9 +49,33 @@ class HomeViewModel : ViewModel() {
                     val result = repository.getCategoryVideos(typeId = typeId, page = 1)
                     result.onSuccess { videos ->
                         if (videos.isNotEmpty()) {
-                            // 每个分类取最新6个
-                            sectionList.add(HomeSection(name, typeId, videos.take(6)))
+                            // 每个分类取最新 6 个
+                            // Web 端逻辑：优先展示热门和新更新的视频
+                            val sortedVideos = videos.sortedWith(compareByDescending<Video> { 
+                                it.vod_time_add  // 按添加时间排序
+                            }.thenByDescending { 
+                                it.vod_hits      // 其次按点击量排序
+                            }).take(6)
+                            sectionList.add(HomeSection(name, typeId, sortedVideos))
                         }
+                    }.onFailure { exception ->
+                        // 单个分类失败不影响其他分类
+                    }
+                } catch (e: Exception) {
+                    // 忽略单个分类错误
+                }
+            }
+            
+            if (sectionList.isEmpty()) {
+                _error.value = "加载首页数据失败"
+            } else {
+                _sections.value = sectionList
+            }
+            
+            _isLoading.value = false
+        }
+    }
+}
                     }.onFailure { exception ->
                         // 单个分类失败不影响其他分类
                     }

@@ -23,15 +23,8 @@ class MainActivity : AppCompatActivity() {
     // 当前选中的 Fragment
     private var currentFragment: Fragment? = null
     
-    // 分类导航项
-    private val navCategories = listOf(
-        Pair(0, "首页"),
-        Pair(1, "电影"),
-        Pair(2, "连续剧"),
-        Pair(3, "综艺"),
-        Pair(4, "动漫"),
-        Pair(5, "短剧")
-    )
+    // 分类导航项（从 API 动态加载）
+    private var navCategories: List<Pair<Int, String>> = emptyList()
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +38,9 @@ class MainActivity : AppCompatActivity() {
             
             // 获取 Header Binding
             headerBinding = binding.header
+            
+            // 加载分类导航
+            loadNavCategories()
             
             setupHeader()
             Log.d(TAG, "Header setup complete")
@@ -61,6 +57,22 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "启动失败：${e.message}", Toast.LENGTH_LONG).show()
             finish()
         }
+    }
+    
+    /**
+     * 从 API 加载首页分类导航
+     */
+    private fun loadNavCategories() {
+        // 定义大类导航（同步 Web 端）
+        // Web 端：1=电影，2=连续剧，3=综艺，4=动漫，5=短剧
+        navCategories = listOf(
+            Pair(0, "首页"),
+            Pair(1, "电影"),
+            Pair(2, "连续剧"),
+            Pair(3, "综艺"),
+            Pair(4, "动漫"),
+            Pair(5, "短剧")
+        )
     }
     
     private fun setupHeader() {

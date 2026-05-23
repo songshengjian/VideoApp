@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.videoapp.R
 import com.example.videoapp.data.api.ApiClient
+import com.example.videoapp.data.api.AdsResponse
 import com.example.videoapp.data.model.Video
 import com.example.videoapp.databinding.ActivityVideoDetailBinding
 import com.example.videoapp.ui.player.VideoPlayerActivity
@@ -38,6 +39,9 @@ class VideoDetailActivity : AppCompatActivity() {
     private var episodeAdapter: EpisodeAdapter? = null
     private var popupSourceAdapter: SourceAdapter? = null
     
+    // 广告配置
+    private var adsConfig: AdsResponse? = null
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -59,6 +63,9 @@ class VideoDetailActivity : AppCompatActivity() {
             
             setupUI()
             
+            // 加载广告配置
+            loadAdsConfig()
+            
             if (videoId.isNotEmpty()) {
                 loadVideoDetail()
             }
@@ -74,6 +81,48 @@ class VideoDetailActivity : AppCompatActivity() {
         binding.buttonBack.setOnClickListener {
             finish()
         }
+        
+        // 播放按钮
+        binding.buttonPlay.setOnClickListener {
+            startPlayback()
+        }
+        
+        // 设置播放源列表（纵向）
+        binding.recyclerViewSources.layoutManager = LinearLayoutManager(this)
+        
+        // 设置剧集列表
+        binding.recyclerViewEpisodes.layoutManager = LinearLayoutManager(this)
+        
+        // 弹窗中的播放源列表
+        binding.recyclerViewPopupSources.layoutManager = LinearLayoutManager(this)
+        
+        // 关闭弹窗按钮
+        binding.buttonClosePopupSource.setOnClickListener {
+            hideSourcePopup()
+        }
+    }
+    
+    /**
+     * 加载广告配置
+     */
+    private fun loadAdsConfig() {
+        lifecycleScope.launch {
+            try {
+                val result = VideoRepository().getAds()
+                withContext(Dispatchers.Main) {
+                    result.onSuccess { config ->
+                        adsConfig = config
+                        Log.d(TAG, "广告配置加载成功")
+                        // 详情页暂时没有广告位，预留接口
+                    }.onFailure {
+                        Log.w(TAG, "广告配置加载失败：${it.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "广告配置加载异常", e)
+            }
+        }
+    }
         
         // 播放按钮
         binding.buttonPlay.setOnClickListener {
@@ -126,10 +175,80 @@ class VideoDetailActivity : AppCompatActivity() {
     
     private fun loadVideoDetail() {
         if (videoId.isEmpty()) {
-            Toast.makeText(this, "视频ID为空", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "视频 ID 为空", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
+        
+        lifecycleScope.launch {
+            try {
+                // 使用多渠道聚合接口获取所有频道的视频数据（同步 Web 端 getVideoDetailAllChannels）
+                val response = ApiClient.videoApi.getVideoDetailAllChannels(videoId)
+                withContext(Dispatchers.Main) {
+                    if (response.isSuccessful && response.body() != null) {
+                        val body = response.body()!!
+                        if (body.code == 1 && body.list.isNotEmpty()) {
+                            val video = body.list.first()
+                            currentVideo = video
+                            binding.textViewVideoTitle.text = video.vod_name
+                            binding.textViewAppBarTitle.text = video.vod_name
+                            binding.textViewVideoYear.text = "年份：${video.vod_year ?: "未知"}"
+                            binding.textViewVideoArea.text = "地区：${video.vod_area ?: "未知"}"
+                            binding.textViewVideoType.text = "类型：${video.vod_class ?: "未知"}"
+                            
+                            var content = video.vod_content ?: "暂无简介"
+                            if (content.length > 200) {
+                                content = content.substring(0, 200) + "..."
+                            }
+                            binding.textViewVideoDesc.text = "简介：$content"
+                            
+                            // 解析播放源（多渠道聚合）
+                            playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
+                            if (playSources.isNotEmpty()) {
+                                // 创建播放源适配器
+                                sourceAdapter = SourceAdapter(playSources, currentSourceIndex) { index ->
+                                    currentSourceIndex = index
+                                    currentEpisodeIndex = 0
+                                    episodeAdapter?.updateList(playSources[index].episodes, 0)
+                                    sourceAdapter?.updateCurrentIndex(index)
+                                    Toast.makeText(this@VideoDetailActivity, "已切换到 ${playSources[index].name}", Toast.LENGTH_SHORT).show()
+                                }
+                                binding.recyclerViewSources.adapter = sourceAdapter
+                                
+                                // 创建剧集适配器
+                                episodeAdapter = EpisodeAdapter(playSources[currentSourceIndex].episodes, currentEpisodeIndex) { index ->
+                                    currentEpisodeIndex = index
+                                    episodeAdapter?.updateCurrentIndex(index)
+                                }
+                                binding.recyclerViewEpisodes.adapter = episodeAdapter
+                                
+                                // 直接显示播放源和选集列表（不弹窗）
+                                binding.layoutSources.visibility = View.VISIBLE
+                                binding.layoutEpisodes.visibility = View.VISIBLE
+                                binding.buttonPlay.visibility = View.VISIBLE
+                                
+                                // 检测所有播放源状态（异步）
+                                checkSourcesStatus()
+                            } else {
+                                Toast.makeText(this@VideoDetailActivity, "暂无播放资源", Toast.LENGTH_SHORT).show()
+                                binding.layoutSources.visibility = View.GONE
+                                binding.layoutEpisodes.visibility = View.GONE
+                                binding.buttonPlay.visibility = View.GONE
+                            }
+                        } else {
+                            Toast.makeText(this@VideoDetailActivity, body.msg, Toast.LENGTH_SHORT).show()
+                            finish()
+                        }
+                    } else {
+                        Toast.makeText(this@VideoDetailActivity, "加载视频详情失败", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading video detail", e)
+                Toast.makeText(this@VideoDetailActivity, "加载详情失败：${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
         
         lifecycleScope.launch {
             try {

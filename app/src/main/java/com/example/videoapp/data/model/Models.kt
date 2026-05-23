@@ -102,7 +102,11 @@ data class Category(
     val type_jumpurl: String = "",
     val type_addtime: String = "",
     val type_time: Long = 0L,
-    val type_mid_1: Int = 0
+    val type_mid_1: Int = 0,
+    // 层级分类支持
+    val parent_id: Int = 0,
+    val channel_type_id: Int = 0,
+    val children: List<Category> = emptyList()
 )
 
 data class VideoResponse(
