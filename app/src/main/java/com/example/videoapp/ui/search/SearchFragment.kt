@@ -86,15 +86,19 @@ class SearchFragment : Fragment() {
     
     private fun observeViewModel() {
         viewModel.videos.observe(viewLifecycleOwner) { videos ->
-            videos.let {
+            videos?.let {
                 (binding.recyclerViewSearch.adapter as? VideoAdapter)?.submitList(it)
+                
+                // 显示搜索结果数量
+                binding.textViewResultCount.text = "共找到 ${it.size} 个结果"
+                binding.textViewResultCount.visibility = View.VISIBLE
             }
         }
         
         viewModel.searchedChannels.observe(viewLifecycleOwner) { channels ->
-            channels.let {
+            channels?.let {
                 if (it.isNotEmpty()) {
-                    val channelInfo = "已搜索 ${it.size} 个频道：${it.joinToString("、").take(50)}${if (it.size > 5) "等" else ""}"
+                    val channelInfo = "已搜索 ${it.size} 个频道：${it.joinToString("、").take(50)}${if (it.size > 5) "..." else ""}"
                     binding.textViewSearchInfo.text = channelInfo
                     binding.textViewSearchInfo.visibility = View.VISIBLE
                 } else {
@@ -105,10 +109,10 @@ class SearchFragment : Fragment() {
         
         viewModel.total.observe(viewLifecycleOwner) { total ->
             if (total > 0) {
-                binding.textViewResultCount.text = "共找到 $total 个结果"
-                binding.textViewResultCount.visibility = View.VISIBLE
-            } else {
-                binding.textViewResultCount.visibility = View.GONE
+                // 如果总数和实际列表不一致，显示总数信息
+                if (total != binding.textViewResultCount.text) {
+                    binding.textViewResultCount.append(" (总计：$total)")
+                }
             }
         }
         
@@ -118,7 +122,7 @@ class SearchFragment : Fragment() {
         
         viewModel.error.observe(viewLifecycleOwner) { error ->
             error?.let {
-                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "搜索失败：$it", Toast.LENGTH_SHORT).show()
             }
         }
     }
