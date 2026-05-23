@@ -110,7 +110,8 @@ class SearchFragment : Fragment() {
         viewModel.total.observe(viewLifecycleOwner) { total ->
             if (total > 0) {
                 // 如果总数和实际列表不一致，显示总数信息
-                if (total != binding.textViewResultCount.text) {
+                val currentText = binding.textViewResultCount.text.toString()
+                if (!currentText.contains("总计：$total")) {
                     binding.textViewResultCount.append(" (总计：$total)")
                 }
             }
