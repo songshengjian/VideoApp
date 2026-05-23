@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.videoapp.R
+import com.example.videoapp.ui.player.PlaySource
 
 class SourceAdapter(
     private var sources: List<PlaySource>,
