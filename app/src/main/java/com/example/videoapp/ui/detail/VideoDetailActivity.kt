@@ -188,7 +188,7 @@ class VideoDetailActivity : AppCompatActivity() {
                                         },
                                         status = 0
                                     )
-                                }
+                                }.toMutableList()
                                 Log.d(TAG, "使用结构化数据: ${playSources.size} 个播放源")
                             } else {
                                 // 回退到旧的解析方式
