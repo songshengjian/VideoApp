@@ -135,7 +135,8 @@ data class VideoResponse(
 data class CategoryResponse(
     val code: Int,
     val msg: String,
-    @SerializedName("class") val class_: List<Category> = emptyList()
+    @SerializedName("class") val class_: List<Category> = emptyList(),
+    val tree: List<Category> = emptyList()
 )
 
 data class User(

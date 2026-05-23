@@ -39,9 +39,13 @@ class CategoriesViewModel : ViewModel() {
             repository.getCategories()
                 .onSuccess { response ->
                     _categories.value = response.class_
-                    // 同步层级分类结构（Web 端有 tree 字段）
-                    // 这里使用 parentId 字段来构建层级
-                    _hierarchicalCategories.value = buildHierarchicalCategories(response.class_)
+                    // 直接使用 Web 端返回的 tree 字段（现成的层级结构）
+                    if (response.tree.isNotEmpty()) {
+                        _hierarchicalCategories.value = response.tree
+                    } else {
+                        // 回退：自己构建层级结构
+                        _hierarchicalCategories.value = buildHierarchicalCategories(response.class_)
+                    }
                 }
                 .onFailure { exception ->
                     _error.value = exception.message
