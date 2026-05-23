@@ -73,7 +73,19 @@ data class Video(
     val vod_down_url_rel: String = "",
     val vod_rel_vod: String = "",
     val vod_rel_art: String = "",
-    val vod_content_status: String = ""
+    val vod_content_status: String = "",
+    val play_sources: List<PlaySourceData> = emptyList()
+)
+
+data class PlaySourceData(
+    val name: String,
+    val channel: String,
+    val episodes: List<EpisodeData>
+)
+
+data class EpisodeData(
+    val name: String,
+    val url: String
 )
 
 data class Category(

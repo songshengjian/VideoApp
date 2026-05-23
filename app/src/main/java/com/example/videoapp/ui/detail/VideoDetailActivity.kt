@@ -178,8 +178,23 @@ class VideoDetailActivity : AppCompatActivity() {
                             }
                             binding.textViewVideoDesc.text = "简介：$content"
                             
-                            // 解析播放源（多渠道聚合）
-                            playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
+                            // 优先使用结构化的播放源数据（从 Web 端新版接口获取）
+                            if (video.play_sources.isNotEmpty()) {
+                                playSources = video.play_sources.map { sourceData ->
+                                    PlaySource(
+                                        name = "${sourceData.channel} - ${sourceData.name}",
+                                        episodes = sourceData.episodes.map { ep ->
+                                            Episode(ep.name, ep.url)
+                                        },
+                                        status = 0
+                                    )
+                                }
+                                Log.d(TAG, "使用结构化数据: ${playSources.size} 个播放源")
+                            } else {
+                                // 回退到旧的解析方式
+                                playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
+                            }
+                            
                             if (playSources.isNotEmpty()) {
                                 // 创建播放源适配器
                                 sourceAdapter = SourceAdapter(playSources, currentSourceIndex) { index ->
