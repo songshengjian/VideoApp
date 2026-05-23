@@ -152,9 +152,22 @@ class VideoDetailActivity : AppCompatActivity() {
                             }
                             binding.textViewVideoDesc.text = "简介：$content"
                             
-                            // 同步 Web 端逻辑：使用 parsePlaySources 过滤非 M3U8 播放源
-                            playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
-                            Log.d(TAG, "解析播放源完成：${playSources.size} 个播放源")
+                            // 直接使用 play_sources（后端已聚合所有渠道）
+                            if (video.play_sources.isNotEmpty()) {
+                                playSources = video.play_sources.map { sourceData ->
+                                    PlaySource(
+                                        name = "${sourceData.channel} - ${sourceData.name}",
+                                        episodes = sourceData.episodes.map { ep ->
+                                            Episode(ep.name, ep.url)
+                                        },
+                                        status = 0
+                                    )
+                                }.toMutableList()
+                                Log.d(TAG, "使用 play_sources: ${playSources.size} 个播放源")
+                            } else {
+                                playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
+                                Log.d(TAG, "使用 parsePlaySources: ${playSources.size} 个播放源")
+                            }
                             
                             Toast.makeText(this@VideoDetailActivity, "播放源：${playSources.size}个", Toast.LENGTH_LONG).show()
                             
