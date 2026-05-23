@@ -85,10 +85,15 @@ class CategoriesFragment : Fragment() {
             try {
                 Log.d(TAG, "Video clicked: ${video.vod_name}")
                 
-                // 跳转到视频详情页
+                // 传递完整视频数据到详情页，包含所有渠道的播放源信息
                 val intent = android.content.Intent(requireContext(), com.example.videoapp.ui.detail.VideoDetailActivity::class.java)
                 intent.putExtra(com.example.videoapp.ui.detail.VideoDetailActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
                 intent.putExtra(com.example.videoapp.ui.detail.VideoDetailActivity.EXTRA_VIDEO_TITLE, video.vod_name)
+                
+                // 序列化完整视频数据（包含播放源信息）
+                val videoJson = com.google.gson.Gson().toJson(video)
+                intent.putExtra(com.example.videoapp.ui.detail.VideoDetailActivity.EXTRA_VIDEO_DATA, videoJson)
+                
                 startActivity(intent)
             } catch (e: Exception) {
                 Log.e(TAG, "Error opening video player", e)
