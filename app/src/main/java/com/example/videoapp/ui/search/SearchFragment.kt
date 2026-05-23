@@ -72,10 +72,15 @@ class SearchFragment : Fragment() {
             try {
                 Log.d(TAG, "Video clicked: ${video.vod_name}")
                 
-                // 跳转到视频详情页面
+                // 传递完整视频数据到详情页，包含所有渠道的播放源信息
                 val intent = android.content.Intent(requireContext(), VideoDetailActivity::class.java)
                 intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
                 intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_TITLE, video.vod_name)
+                
+                // 序列化完整视频数据（包含 _channel_name, _channel_id 等信息）
+                val videoJson = com.google.gson.Gson().toJson(video)
+                intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_DATA, videoJson)
+                
                 startActivity(intent)
             } catch (e: Exception) {
                 Log.e(TAG, "Error opening video detail", e)
