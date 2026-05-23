@@ -80,12 +80,17 @@ class CategoriesViewModel : ViewModel() {
         
         // 分离父分类和子分类
         flatCategories.forEach { category ->
-            if (category.parent_id == 0 && category.channel_type_id > 0) {
+            // 父分类：parent_id == 0 或 type_pid == 0
+            val isParent = category.parent_id == 0 && category.type_pid == 0
+            if (isParent) {
                 // 这是父分类（大类）
                 parentMap[category.type_id] = category.copy(children = mutableListOf())
-            } else if (category.parent_id > 0) {
-                // 这是子分类
-                childrenMap.getOrPut(category.parent_id) { mutableListOf() }.add(category)
+            } else {
+                // 这是子分类，找到它的父分类 ID
+                val parentId = if (category.parent_id > 0) category.parent_id else category.type_pid
+                if (parentId > 0) {
+                    childrenMap.getOrPut(parentId) { mutableListOf() }.add(category)
+                }
             }
         }
         

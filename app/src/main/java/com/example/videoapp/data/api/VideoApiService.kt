@@ -58,7 +58,7 @@ interface VideoApiService {
      * 获取视频详情（所有频道聚合）
      * Web 端对应接口：IndexController::getVideoDetailAllChannels
      */
-    @GET("/api/video/detail_all")
+    @GET("/api/video/detail-all")
     suspend fun getVideoDetailAllChannels(
         @Query("ids") ids: String
     ): Response<VideoResponse>
