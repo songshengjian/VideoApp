@@ -43,7 +43,8 @@ class VideoDetailActivity : AppCompatActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.e(TAG, "=== VideoDetailActivity 启动 === videoId=$videoId")
+        
+        Log.e(TAG, "=== VideoDetailActivity onCreate 开始 ===")
         
         try {
             binding = ActivityVideoDetailBinding.inflate(layoutInflater)
@@ -54,6 +55,22 @@ class VideoDetailActivity : AppCompatActivity() {
                 override fun handleOnBackPressed() {
                     finish()
                 }
+            })
+
+            videoId = intent.getStringExtra(EXTRA_VIDEO_ID) ?: ""
+            videoTitle = intent.getStringExtra(EXTRA_VIDEO_TITLE) ?: ""
+            
+            Log.e(TAG, "=== videoId=$videoId, videoTitle=$videoTitle ===")
+            
+            setupRecyclerView()
+            setupClickListeners()
+            loadVideoDetail()
+            loadAdsConfig()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "=== onCreate 异常: ${e.message} ===", e)
+        }
+    }
             })
 
             videoId = intent.getStringExtra(EXTRA_VIDEO_ID) ?: ""
