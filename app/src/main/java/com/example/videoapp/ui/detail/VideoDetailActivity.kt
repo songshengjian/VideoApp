@@ -153,7 +153,12 @@ class VideoDetailActivity : AppCompatActivity() {
                             }
                             binding.textViewVideoDesc.text = "简介：$content"
                             
-                            if (video.play_sources.isNotEmpty()) {
+                            // 优先使用 vod_play_from 和 vod_play_url 解析所有播放源
+                            // 因为 play_sources 是后端过滤后的数据，可能不完整
+                            if (video.vod_play_from.isNotEmpty() && video.vod_play_url.isNotEmpty()) {
+                                playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
+                                Log.d(TAG, "解析播放源：${playSources.size} 个播放源")
+                            } else {
                                 playSources = video.play_sources.map { sourceData ->
                                     PlaySource(
                                         name = "${sourceData.channel} - ${sourceData.name}",
@@ -164,8 +169,6 @@ class VideoDetailActivity : AppCompatActivity() {
                                     )
                                 }.toMutableList()
                                 Log.d(TAG, "使用结构化数据：${playSources.size} 个播放源")
-                            } else {
-                                playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
                             }
                             
                             if (playSources.isNotEmpty()) {
