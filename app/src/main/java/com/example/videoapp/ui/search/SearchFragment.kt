@@ -5,14 +5,16 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
+import com.example.videoapp.R
 import com.example.videoapp.databinding.FragmentSearchBinding
 import com.example.videoapp.ui.home.VideoAdapter
 import com.example.videoapp.ui.detail.VideoDetailActivity
+import com.google.gson.Gson
 
 class SearchFragment : Fragment() {
     
@@ -23,6 +25,9 @@ class SearchFragment : Fragment() {
     private val viewModel: SearchViewModel by viewModels()
     
     private var searchKeyword: String = ""
+    private var currentChannel: String = "全部"
+    private var allVideos: List<com.example.videoapp.data.model.Video> = emptyList()
+    private val searchedChannels = mutableListOf<String>()
     
     companion object {
         private const val ARG_KEYWORD = "keyword"
@@ -57,10 +62,12 @@ class SearchFragment : Fragment() {
         
         Log.d(TAG, "Fragment onViewCreated, keyword: $searchKeyword")
         
+        binding.textViewKeyword.text = "搜索：$searchKeyword"
+        
         setupRecyclerView()
+        setupChannelFilter()
         observeViewModel()
         
-        // 如果有初始关键词，自动搜索
         if (searchKeyword.isNotEmpty()) {
             viewModel.searchVideos(searchKeyword)
         }
@@ -72,13 +79,12 @@ class SearchFragment : Fragment() {
             try {
                 Log.d(TAG, "Video clicked: ${video.vod_name}")
                 
-                // 传递完整视频数据到详情页，包含所有渠道的播放源信息
+                // 直接传递完整视频数据，包含播放源
                 val intent = android.content.Intent(requireContext(), VideoDetailActivity::class.java)
                 intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
                 intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_TITLE, video.vod_name)
                 
-                // 序列化完整视频数据（包含 _channel_name, _channel_id 等信息）
-                val videoJson = com.google.gson.Gson().toJson(video)
+                val videoJson = Gson().toJson(video)
                 intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_DATA, videoJson)
                 
                 startActivity(intent)
@@ -89,35 +95,93 @@ class SearchFragment : Fragment() {
         }
     }
     
+    private fun setupChannelFilter() {
+        binding.buttonChannelAll.setOnClickListener {
+            if (currentChannel != "全部") {
+                currentChannel = "全部"
+                updateChannelFilterUI()
+                filterVideos()
+            }
+        }
+    }
+    
+    private fun createChannelButtons(channels: List<String>) {
+        binding.layoutChannelButtons.removeAllViews()
+        
+        channels.forEach { channel ->
+            val textView = TextView(requireContext()).apply {
+                text = channel
+                setPadding(24, 16, 24, 16)
+                textSize = 12f
+                setTextColor(resources.getColor(android.R.color.white, theme))
+                setBackgroundResource(R.drawable.channel_filter_bg)
+                isSelected = false
+                setOnClickListener {
+                    if (currentChannel != channel) {
+                        currentChannel = channel
+                        updateChannelFilterUI()
+                        filterVideos()
+                    }
+                }
+            }
+            
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.setMargins(4, 0, 4, 0)
+            textView.layoutParams = params
+            
+            binding.layoutChannelButtons.addView(textView)
+        }
+    }
+    
+    private fun updateChannelFilterUI() {
+        binding.buttonChannelAll.isSelected = (currentChannel == "全部")
+        
+        for (i in 0 until binding.layoutChannelButtons.childCount) {
+            val view = binding.layoutChannelButtons.getChildAt(i)
+            if (view is TextView) {
+                view.isSelected = (view.text.toString() == currentChannel)
+            }
+        }
+    }
+    
+    private fun filterVideos() {
+        val filtered = if (currentChannel == "全部") {
+            allVideos
+        } else {
+            allVideos.filter { 
+                val channelName = it.vod_play_from?.split("$$$")?.firstOrNull()?.trim()
+                channelName?.contains(currentChannel) == true 
+            }
+        }
+        
+        (binding.recyclerViewSearch.adapter as? VideoAdapter)?.submitList(filtered)
+        binding.textViewResultCount.text = "共找到 ${filtered.size} 个结果（${currentChannel}）"
+        
+        Log.d(TAG, "筛选：$currentChannel, 结果：${filtered.size} 个")
+    }
+    
     private fun observeViewModel() {
         viewModel.videos.observe(viewLifecycleOwner) { videos ->
             videos?.let {
-                (binding.recyclerViewSearch.adapter as? VideoAdapter)?.submitList(it)
+                allVideos = it
+                filterVideos()
                 
-                // 显示搜索结果数量
-                binding.textViewResultCount.text = "共找到 ${it.size} 个结果"
-                binding.textViewResultCount.visibility = View.VISIBLE
-            }
-        }
-        
-        viewModel.searchedChannels.observe(viewLifecycleOwner) { channels ->
-            channels?.let {
+                // 显示搜索渠道信息
                 if (it.isNotEmpty()) {
-                    val channelInfo = "已搜索 ${it.size} 个频道：${it.joinToString("、").take(50)}${if (it.size > 5) "..." else ""}"
-                    binding.textViewSearchInfo.text = channelInfo
-                    binding.textViewSearchInfo.visibility = View.VISIBLE
-                } else {
-                    binding.textViewSearchInfo.visibility = View.GONE
-                }
-            }
-        }
-        
-        viewModel.total.observe(viewLifecycleOwner) { total ->
-            if (total > 0) {
-                // 如果总数和实际列表不一致，显示总数信息
-                val currentText = binding.textViewResultCount.text.toString()
-                if (!currentText.contains("总计：$total")) {
-                    binding.textViewResultCount.append(" (总计：$total)")
+                    val channels = it.mapNotNull { v -> 
+                        v.vod_play_from?.split("$$$")?.firstOrNull()?.trim() 
+                    }.distinct()
+                    
+                    if (channels.isNotEmpty()) {
+                        searchedChannels.clear()
+                        searchedChannels.addAll(channels)
+                        
+                        binding.layoutChannelFilter.visibility = View.VISIBLE
+                        createChannelButtons(channels)
+                    }
                 }
             }
         }

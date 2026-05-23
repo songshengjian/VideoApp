@@ -15,14 +15,44 @@
         android:elevation="2dp">
 
         <TextView
-            android:id="@+id/text_view_search_info"
+            android:id="@+id/text_view_keyword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:textColor="#666666"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:visibility="gone" />
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#333333" />
+
+        <!-- 渠道筛选区域 -->
+        <LinearLayout
+            android:id="@+id/layout_channel_filter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/button_channel_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="8dp 12dp"
+                android:background="@drawable/channel_filter_bg"
+                android:text="全部"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:layout_marginEnd="4dp" />
+
+            <androidx.core.widget.NestedScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:id="@+id/layout_channel_buttons"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </androidx.core.widget.NestedScrollView>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/text_view_result_count"
@@ -30,8 +60,7 @@
             android:layout_height="wrap_content"
             android:textSize="12sp"
             android:textColor="#999999"
-            android:layout_marginTop="4dp"
-            android:visibility="gone" />
+            android:layout_marginTop="4dp" />
     </LinearLayout>
 
     <FrameLayout
