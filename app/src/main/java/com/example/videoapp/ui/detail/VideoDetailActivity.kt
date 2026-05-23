@@ -44,23 +44,21 @@ class VideoDetailActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        Log.e(TAG, "=== VideoDetailActivity onCreate 开始 ===")
+        binding = ActivityVideoDetailBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        
+        // 用 Toast 显示收到的参数
+        videoId = intent.getStringExtra(EXTRA_VIDEO_ID) ?: ""
+        videoTitle = intent.getStringExtra(EXTRA_VIDEO_TITLE) ?: ""
+        Toast.makeText(this, "收到: id=$videoId, title=$videoTitle", Toast.LENGTH_LONG).show()
         
         try {
-            binding = ActivityVideoDetailBinding.inflate(layoutInflater)
-            setContentView(binding.root)
-            
             // 处理返回键
             onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
                     finish()
                 }
             })
-
-            videoId = intent.getStringExtra(EXTRA_VIDEO_ID) ?: ""
-            videoTitle = intent.getStringExtra(EXTRA_VIDEO_TITLE) ?: ""
-            
-            Log.e(TAG, "=== videoId=$videoId, videoTitle=$videoTitle ===")
             
             setupRecyclerView()
             setupClickListeners()
@@ -68,7 +66,7 @@ class VideoDetailActivity : AppCompatActivity() {
             loadAdsConfig()
             
         } catch (e: Exception) {
-            Log.e(TAG, "=== onCreate 异常: ${e.message} ===", e)
+            Toast.makeText(this, "错误: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
             })
@@ -175,20 +173,21 @@ class VideoDetailActivity : AppCompatActivity() {
             return
         }
         
+        Toast.makeText(this, "开始加载: id=$videoId", Toast.LENGTH_SHORT).show()
+        
         lifecycleScope.launch {
             try {
                 // 使用多渠道聚合接口获取所有频道的视频数据（同步 Web 端 getVideoDetailAllChannels）
                 val response = ApiClient.videoApi.getVideoDetailAllChannels(videoId)
                 withContext(Dispatchers.Main) {
-                    Log.e(TAG, "=== API响应: code=${response.code()} ===")
+                    Toast.makeText(this@VideoDetailActivity, "API返回: code=${response.code()}", Toast.LENGTH_SHORT).show()
                     
                     if (response.isSuccessful && response.body() != null) {
                         val body = response.body()!!
-                        Log.e(TAG, "=== 返回数据: code=${body.code}, list.size=${body.list.size} ===")
                         
                         if (body.code == 1 && body.list.isNotEmpty()) {
                             val video = body.list.first()
-                            Log.e(TAG, "=== video.play_sources=${video.play_sources.size}, debug_channels=${video.debug_channels} ===")
+                            Toast.makeText(this@VideoDetailActivity, "播放源: ${video.play_sources.size}个, 渠道:${video.debug_channels}", Toast.LENGTH_LONG).show()
                             
                             currentVideo = video
                             binding.textViewVideoTitle.text = video.vod_name
