@@ -48,7 +48,7 @@ class SourceAdapter(
         
         // 高亮当前选中的源
         if (position == currentIndex) {
-            holder.textViewSource.setTextColor(0xFFE63950.toInt())
+            holder.textViewSource.setTextColor(0xFFFFFFFF.toInt())  // 白色文字
             holder.textViewSource.setBackgroundResource(R.drawable.source_active_bg)
         } else if (isEmpty) {
             holder.textViewSource.setTextColor(0xFF999999.toInt())
