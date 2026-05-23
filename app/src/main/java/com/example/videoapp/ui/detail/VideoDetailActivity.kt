@@ -60,8 +60,7 @@ class VideoDetailActivity : AppCompatActivity() {
                 }
             })
             
-            setupRecyclerView()
-            setupClickListeners()
+            setupUI()
             loadVideoDetail()
             loadAdsConfig()
             
