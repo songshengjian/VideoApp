@@ -139,16 +139,6 @@ class VideoDetailActivity : AppCompatActivity() {
                         if (body.code == 1 && body.list.isNotEmpty()) {
                             val video = body.list.first()
                             
-                            // 详细调试日志
-                            Log.d(TAG, "===== API 返回数据开始 =====")
-                            Log.d(TAG, "play_sources 数量：${video.play_sources.size}")
-                            Log.d(TAG, "vod_play_from: ${video.vod_play_from.take(200)}")
-                            Log.d(TAG, "vod_play_url: ${video.vod_play_url.take(200)}")
-                            Log.d(TAG, "debug_channels: ${video.debug_channels}")
-                            Log.d(TAG, "===== API 返回数据结束 =====")
-                            
-                            Toast.makeText(this@VideoDetailActivity, "play_sources:${video.play_sources.size}个，debug_channels:${video.debug_channels.size}个", Toast.LENGTH_LONG).show()
-                            
                             currentVideo = video
                             binding.textViewVideoTitle.text = video.vod_name
                             binding.textViewAppBarTitle.text = video.vod_name
@@ -162,30 +152,11 @@ class VideoDetailActivity : AppCompatActivity() {
                             }
                             binding.textViewVideoDesc.text = "简介：$content"
                             
-                            // 使用 play_sources 结构化数据（后端已聚合所有渠道）
-                            if (video.play_sources.isNotEmpty()) {
-                                Log.d(TAG, "使用 play_sources, 数量：${video.play_sources.size}")
-                                playSources = video.play_sources.mapIndexed { index, sourceData ->
-                                    Log.d(TAG, "[play_sources] 渠道${index + 1}: ${sourceData.channel} - ${sourceData.name}, 剧集数：${sourceData.episodes.size}")
-                                    PlaySource(
-                                        name = "${sourceData.channel} - ${sourceData.name}",
-                                        episodes = sourceData.episodes.map { ep ->
-                                            Episode(ep.name, ep.url)
-                                        },
-                                        status = 0
-                                    )
-                                }.toMutableList()
-                                Log.d(TAG, "最终 playSources 数量：${playSources.size}")
-                            } else {
-                                // 备用方案：解析 vod_play_from 和 vod_play_url
-                                Log.d(TAG, "play_sources 为空，使用 parsePlaySources 解析")
-                                Log.d(TAG, "vod_play_from: ${video.vod_play_from}")
-                                Log.d(TAG, "vod_play_url length: ${video.vod_play_url.length}")
-                                playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
-                                Log.d(TAG, "parsePlaySources 返回数量：${playSources.size}")
-                            }
+                            // 同步 Web 端逻辑：使用 parsePlaySources 过滤非 M3U8 播放源
+                            playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
+                            Log.d(TAG, "解析播放源完成：${playSources.size} 个播放源")
                             
-                            Toast.makeText(this@VideoDetailActivity, "最终播放源：${playSources.size}个", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this@VideoDetailActivity, "播放源：${playSources.size}个", Toast.LENGTH_LONG).show()
                             
                             if (playSources.isNotEmpty()) {
                                 sourceAdapter = SourceAdapter(playSources, currentSourceIndex) { index ->
@@ -251,26 +222,45 @@ class VideoDetailActivity : AppCompatActivity() {
             
             if (name.isEmpty()) continue
             
-            val episodes = mutableListOf<Episode>()
+            if (urlStr.isEmpty()) continue
             
-            if (urlStr.isNotEmpty()) {
-                val episodeParts = urlStr.split("#").filter { it.isNotEmpty() }
-                Log.d(TAG, "[parsePlaySources] 播放源 '$name' 有 ${episodeParts.size} 集")
-                for (part in episodeParts) {
-                    val episodeData = part.split("$")
-                    if (episodeData.size >= 2) {
-                        episodes.add(Episode(episodeData[0].trim(), episodeData[1].trim()))
+            val episodeParts = urlStr.split("#").filter { it.isNotEmpty() }
+            
+            // 同步 Web 端逻辑：检查播放源是否为 M3U8 格式，只保留 M3U8
+            var isM3U8Source = false
+            if (episodeParts.isNotEmpty()) {
+                val firstPart = episodeParts.first().trim()
+                if (firstPart.contains("$")) {
+                    val firstEpisodeData = firstPart.split("$")
+                    if (firstEpisodeData.size >= 2) {
+                        val firstUrl = firstEpisodeData[1].trim().lowercase()
+                        isM3U8Source = firstUrl.contains(".m3u8") || firstUrl.contains("m3u8")
+                        Log.d(TAG, "[parsePlaySources] 播放源 '$name' 第一集 URL: ${firstUrl.take(100)}, M3U8: $isM3U8Source")
                     }
+                }
+            }
+            
+            // 过滤掉非 M3U8 的播放源
+            if (!isM3U8Source) {
+                Log.d(TAG, "[parsePlaySources] 过滤非 M3U8 播放源：$name")
+                continue
+            }
+            
+            val episodes = mutableListOf<Episode>()
+            for (part in episodeParts) {
+                val episodeData = part.split("$")
+                if (episodeData.size >= 2) {
+                    episodes.add(Episode(episodeData[0].trim(), episodeData[1].trim()))
                 }
             }
             
             if (episodes.isNotEmpty()) {
                 sources.add(PlaySource(name, episodes, 0))
-                Log.d(TAG, "[parsePlaySources] 添加播放源：$name, 剧集数：${episodes.size}")
+                Log.d(TAG, "[parsePlaySources] 添加 M3U8 播放源：$name, 剧集数：${episodes.size}")
             }
         }
         
-        Log.d(TAG, "[parsePlaySources] 最终返回 ${sources.size} 个播放源")
+        Log.d(TAG, "[parsePlaySources] 最终返回 ${sources.size} 个 M3U8 播放源")
         return sources
     }
     
