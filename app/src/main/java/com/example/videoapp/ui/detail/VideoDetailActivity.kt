@@ -69,28 +69,6 @@ class VideoDetailActivity : AppCompatActivity() {
             Toast.makeText(this, "错误: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
-            })
-
-            videoId = intent.getStringExtra(EXTRA_VIDEO_ID) ?: ""
-            videoTitle = intent.getStringExtra(EXTRA_VIDEO_TITLE) ?: ""
-            Log.e(TAG, "=== 获取到 videoId: $videoId, videoTitle: $videoTitle ===")
-            
-            binding.textViewAppBarTitle.text = videoTitle
-            
-            setupUI()
-            
-            // 加载广告配置
-            loadAdsConfig()
-            
-            if (videoId.isNotEmpty()) {
-                loadVideoDetail()
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in onCreate", e)
-            Toast.makeText(this, "详情页初始化失败：${e.message}", Toast.LENGTH_SHORT).show()
-            finish()
-        }
-    }
     
     private fun setupUI() {
         // 返回按钮
