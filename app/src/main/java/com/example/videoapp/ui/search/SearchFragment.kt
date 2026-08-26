@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -113,7 +114,7 @@ class SearchFragment : Fragment() {
                 text = channel
                 setPadding(24, 16, 24, 16)
                 textSize = 12f
-                setTextColor(resources.getColor(android.R.color.white, theme))
+                setTextColor(resources.getColor(android.R.color.white, context.theme))
                 setBackgroundResource(R.drawable.channel_filter_bg)
                 isSelected = false
                 setOnClickListener {
