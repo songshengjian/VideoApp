@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.videoapp.data.model.Video
 import com.example.videoapp.data.repository.VideoRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
@@ -29,9 +31,7 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            
-            val sectionList = mutableListOf<HomeSection>()
-            
+
             // 定义分类：typeId 和显示名称
             val categories = listOf(
                 Pair(1, "热播电影"),
@@ -40,35 +40,29 @@ class HomeViewModel : ViewModel() {
                 Pair(4, "热播动漫"),
                 Pair(5, "热播短剧")
             )
-            
-            categories.forEach { (typeId, name) ->
-                try {
-                    val result = repository.getCategoryVideos(typeId = typeId, page = 1)
-                    result.onSuccess { videos ->
-                        if (videos.isNotEmpty()) {
-                            // 每个分类取最新 6 个
-                            // Web 端逻辑：优先展示热门和新更新的视频
-                            val sortedVideos = videos.sortedWith(compareByDescending<Video> { 
-                                it.vod_time_add  // 按添加时间排序
-                            }.thenByDescending { 
-                                it.vod_hits      // 其次按点击量排序
-                            }).take(6)
-                            sectionList.add(HomeSection(name, typeId, sortedVideos))
-                        }
-                    }.onFailure { exception ->
-                        // 单个分类失败不影响其他分类
-                    }
-                } catch (e: Exception) {
-                    // 忽略单个分类错误
+
+            // 并发请求各分类，加快首页加载
+            val sectionList = categories.map { (typeId, name) ->
+                async {
+                    Triple(name, typeId, repository.getCategoryVideos(typeId = typeId, page = 1))
+                }
+            }.awaitAll().mapNotNull { (name, typeId, result) ->
+                result.getOrNull()?.takeIf { it.isNotEmpty() }?.let { videos ->
+                    // 每个分类取最新 6 个：优先展示热门和新更新的视频
+                    val sortedVideos = videos.sortedWith(
+                        compareByDescending<Video> { it.vod_time_add } // 按添加时间排序
+                            .thenByDescending { it.vod_hits }           // 其次按点击量排序
+                    ).take(6)
+                    HomeSection(name, typeId, sortedVideos)
                 }
             }
-            
+
             if (sectionList.isEmpty()) {
                 _error.value = "加载首页数据失败"
             } else {
                 _sections.value = sectionList
             }
-            
+
             _isLoading.value = false
         }
     }

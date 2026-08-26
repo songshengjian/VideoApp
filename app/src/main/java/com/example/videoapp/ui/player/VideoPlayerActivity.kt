@@ -13,6 +13,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.DefaultLoadControl
@@ -20,41 +21,36 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.videoapp.R
-import com.example.videoapp.data.api.ApiClient
-import com.example.videoapp.data.model.AdsResponse
 import com.example.videoapp.data.repository.VideoRepository
 import com.example.videoapp.databinding.ActivityVideoPlayerBinding
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class VideoPlayerActivity : AppCompatActivity() {
-    
+
     private lateinit var binding: ActivityVideoPlayerBinding
     private var exoPlayer: ExoPlayer? = null
     private val TAG = "VideoPlayerActivity"
     private val handler = Handler(Looper.getMainLooper())
     private val hideRunnable = Runnable { hideControlBars() }
     private val HIDE_DELAY = 3000L
-    
+
     private var videoId: String = ""
     private var currentVideoUrl: String = ""
     private var currentEpisodeIndex: Int = 0
     private var playSources: List<PlaySource> = emptyList()
     private var currentSourceIndex: Int = 0
     private var isControlsVisible = false
-    
+
     // 广告相关
     private var bottomAdEnabled = false
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         try {
             binding = ActivityVideoPlayerBinding.inflate(layoutInflater)
             setContentView(binding.root)
-            
+
             // 处理返回键逻辑
             onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
@@ -70,19 +66,19 @@ class VideoPlayerActivity : AppCompatActivity() {
                     }
                 }
             })
-            
+
             videoId = intent.getStringExtra(EXTRA_VIDEO_ID) ?: ""
             val videoTitle = intent.getStringExtra(EXTRA_VIDEO_TITLE) ?: "未知视频"
             currentVideoUrl = intent.getStringExtra(EXTRA_VIDEO_URL) ?: ""
-            
+
             binding.textViewVideoTitle.text = videoTitle
-            
+
             setupUI()
             setupPlayer(currentVideoUrl)
-            
+
             // 加载广告配置
             loadAdsConfig()
-            
+
             if (videoId.isNotEmpty()) {
                 loadVideoDetail(videoId)
             }
@@ -92,13 +88,13 @@ class VideoPlayerActivity : AppCompatActivity() {
             finish()
         }
     }
-    
+
     private fun setupUI() {
         // 返回按钮（直接触发退出确认）
         binding.buttonBack.setOnClickListener {
             showExitConfirmDialog()
         }
-        
+
         // 点击屏幕切换控制栏
         binding.playerView.setOnClickListener {
             if (isControlsVisible) {
@@ -107,25 +103,25 @@ class VideoPlayerActivity : AppCompatActivity() {
                 showControlBars()
             }
         }
-        
+
         // 播放源选择
         binding.buttonSelectSource.setOnClickListener { showSourcePopup() }
-        
+
         // 选集
         binding.buttonSelectEpisode.setOnClickListener { showEpisodePopup() }
-        
+
         // 倍速
         binding.buttonPlaybackSpeed.setOnClickListener { showSpeedPopup() }
-        
+
         // 关闭按钮
         binding.buttonCloseSource.setOnClickListener { hidePopup(binding.popupSource) }
         binding.buttonCloseEpisode.setOnClickListener { hidePopup(binding.popupEpisodes) }
         binding.buttonCloseSpeed.setOnClickListener { hidePopup(binding.popupSpeed) }
-        
+
         // 倍速网格点击
         setupSpeedGrid()
     }
-    
+
     private fun showControlBars() {
         binding.layoutTopBar.visibility = View.VISIBLE
         binding.layoutBottomBar.visibility = View.VISIBLE
@@ -133,7 +129,7 @@ class VideoPlayerActivity : AppCompatActivity() {
         handler.removeCallbacks(hideRunnable)
         handler.postDelayed(hideRunnable, HIDE_DELAY)
     }
-    
+
     private fun hideControlBars() {
         if (binding.popupSource.visibility != View.VISIBLE &&
             binding.popupEpisodes.visibility != View.VISIBLE &&
@@ -143,13 +139,13 @@ class VideoPlayerActivity : AppCompatActivity() {
             isControlsVisible = false
         }
     }
-    
+
     private fun showSourcePopup() {
         if (playSources.isEmpty()) {
             Toast.makeText(this, "暂无其他播放源", Toast.LENGTH_SHORT).show()
             return
         }
-        
+
         binding.popupSource.visibility = View.VISIBLE
         val recyclerView = binding.recyclerViewSources
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -165,13 +161,13 @@ class VideoPlayerActivity : AppCompatActivity() {
             Toast.makeText(this, "已切换到 ${source.name}", Toast.LENGTH_SHORT).show()
         }
     }
-    
+
     private fun showEpisodePopup() {
         if (playSources.isEmpty() || currentSourceIndex >= playSources.size) {
             Toast.makeText(this, "暂无剧集列表", Toast.LENGTH_SHORT).show()
             return
         }
-        
+
         binding.popupEpisodes.visibility = View.VISIBLE
         val recyclerView = binding.recyclerViewEpisodes
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -183,13 +179,13 @@ class VideoPlayerActivity : AppCompatActivity() {
             hidePopup(binding.popupEpisodes)
         }
     }
-    
+
     private fun showSpeedPopup() {
         binding.popupSpeed.visibility = View.VISIBLE
         val currentSpeed = exoPlayer?.playbackParameters?.speed ?: 1.0f
         highlightCurrentSpeed(currentSpeed)
     }
-    
+
     private fun highlightCurrentSpeed(speed: Float) {
         val speedMap = mapOf(
             0.5f to binding.speed05,
@@ -199,7 +195,7 @@ class VideoPlayerActivity : AppCompatActivity() {
             1.5f to binding.speed15,
             2.0f to binding.speed20
         )
-        
+
         speedMap.forEach { (s, textView) ->
             if (s == speed) {
                 textView.setTextColor(ContextCompat.getColor(this, android.R.color.holo_blue_light))
@@ -210,7 +206,7 @@ class VideoPlayerActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     private fun setupSpeedGrid() {
         val speeds = mapOf(
             binding.speed05 to 0.5f,
@@ -220,7 +216,7 @@ class VideoPlayerActivity : AppCompatActivity() {
             binding.speed15 to 1.5f,
             binding.speed20 to 2.0f
         )
-        
+
         speeds.forEach { (textView, speed) ->
             textView.setOnClickListener {
                 exoPlayer?.setPlaybackSpeed(speed)
@@ -230,12 +226,12 @@ class VideoPlayerActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     private fun hidePopup(popup: View) {
         popup.visibility = View.GONE
         showControlBars()
     }
-    
+
     private fun updateEpisodeInfo() {
         if (playSources.isNotEmpty() && currentSourceIndex < playSources.size) {
             val source = playSources[currentSourceIndex]
@@ -248,57 +244,24 @@ class VideoPlayerActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     private fun loadVideoDetail(videoId: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val response = ApiClient.videoApi.getVideoDetail(videoId)
-                withContext(Dispatchers.Main) {
-                    if (response.isSuccessful && response.body() != null) {
-                        val video = response.body()!!.list.firstOrNull()
-                        if (video != null) {
-                            playSources = parsePlaySources(video.vod_play_from, video.vod_play_url)
-                            if (playSources.isNotEmpty()) {
-                                updateEpisodeInfo()
-                            }
+        lifecycleScope.launch {
+            VideoRepository().getVideoDetail(videoId)
+                .onSuccess { video ->
+                    if (video != null) {
+                        playSources = PlaySourceParser.parse(video.vod_play_from, video.vod_play_url)
+                        if (playSources.isNotEmpty()) {
+                            updateEpisodeInfo()
                         }
                     }
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading video detail", e)
-            }
-        }
-    }
-    
-    private fun parsePlaySources(playFrom: String, playUrl: String): List<PlaySource> {
-        val sources = mutableListOf<PlaySource>()
-        if (playFrom.isEmpty() || playUrl.isEmpty()) return sources
-        
-        val sourceNames = playFrom.split("$$$").map { it.trim() }.filter { it.isNotEmpty() }
-        val sourceUrls = playUrl.split("$$$").map { it.trim() }.filter { it.isNotEmpty() }
-        
-        val count = minOf(sourceNames.size, sourceUrls.size)
-        for (i in 0 until count) {
-            val name = sourceNames[i]
-            val urlStr = sourceUrls[i]
-            val episodes = mutableListOf<Episode>()
-            
-            val episodeParts = urlStr.split("#").filter { it.isNotEmpty() }
-            for (part in episodeParts) {
-                val episodeData = part.split("$").filter { it.isNotEmpty() }
-                if (episodeData.size >= 2) {
-                    episodes.add(Episode(episodeData[0].trim(), episodeData[1].trim()))
+                .onFailure { e ->
+                    Log.e(TAG, "Error loading video detail", e)
                 }
-            }
-            
-            if (episodes.isNotEmpty()) {
-                sources.add(PlaySource(name, episodes))
-            }
         }
-        
-        return sources
     }
-    
+
     private fun setupPlayer(videoUrl: String) {
         try {
             exoPlayer = ExoPlayer.Builder(this)
@@ -307,9 +270,9 @@ class VideoPlayerActivity : AppCompatActivity() {
                     .build()
                 )
                 .build()
-                
+
             binding.playerView.player = exoPlayer
-            
+
             exoPlayer?.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     when (playbackState) {
@@ -323,7 +286,7 @@ class VideoPlayerActivity : AppCompatActivity() {
                         Player.STATE_IDLE -> Log.d(TAG, "Idle")
                     }
                 }
-                
+
                 override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                     Log.e(TAG, "Player error code: ${error.errorCode}, message: ${error.message}", error)
                     val errorMsg = when (error.errorCode) {
@@ -335,74 +298,72 @@ class VideoPlayerActivity : AppCompatActivity() {
                     Toast.makeText(this@VideoPlayerActivity, errorMsg, Toast.LENGTH_LONG).show()
                 }
             })
-            
+
             playVideo(videoUrl)
         } catch (e: Exception) {
             Log.e(TAG, "Error setting up player", e)
             Toast.makeText(this, "播放器设置失败：${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
-    
+
     private fun playVideo(videoUrl: String) {
         try {
             currentVideoUrl = videoUrl
             val url = videoUrl.trim()
-            
+
             if (url.isEmpty()) {
                 Toast.makeText(this, "视频链接为空", Toast.LENGTH_SHORT).show()
                 return
             }
-            
+
             Log.d(TAG, "Playing video URL: $url")
-            
+
             val uri = Uri.parse(url)
             val mediaItemBuilder = MediaItem.Builder()
                 .setUri(uri)
-            
+
             exoPlayer?.setMediaItem(mediaItemBuilder.build())
             exoPlayer?.prepare()
             exoPlayer?.playWhenReady = true
-            
+
             Log.d(TAG, "Video playback started")
         } catch (e: Exception) {
             Log.e(TAG, "Error playing video: ${e.message}", e)
             Toast.makeText(this, "播放失败：${e.message ?: "未知错误"}", Toast.LENGTH_SHORT).show()
         }
     }
-    
+
     /**
      * 加载广告配置
      */
     private fun loadAdsConfig() {
-        CoroutineScope(Dispatchers.IO).launch {
+        lifecycleScope.launch {
             try {
-                val repository = com.example.videoapp.data.repository.VideoRepository()
+                val repository = VideoRepository()
                 val result = repository.getAds()
-                withContext(Dispatchers.Main) {
-                    result.onSuccess { ads ->
-                        // 底部广告位
-                        val bottomAd = ads.video_bottom
-                        if (bottomAd.enabled && bottomAd.content.isNotEmpty()) {
-                            bottomAdEnabled = true
-                            binding.adContainerVideoBottom.visibility = View.VISIBLE
-                            binding.webviewVideoBottomAd.loadDataWithBaseURL(
-                                null,
-                                bottomAd.content,
-                                "text/html",
-                                "UTF-8",
-                                null
-                            )
-                            Log.d(TAG, "底部广告已加载")
-                        } else {
-                            bottomAdEnabled = false
-                            binding.adContainerVideoBottom.visibility = View.GONE
-                            Log.d(TAG, "底部广告未启用或内容为空")
-                        }
-                    }.onFailure {
-                        Log.w(TAG, "广告配置加载失败：${it.message}")
-                        // 默认隐藏广告位
+                result.onSuccess { ads ->
+                    // 底部广告位
+                    val bottomAd = ads.video_bottom
+                    if (bottomAd.enabled && bottomAd.content.isNotEmpty()) {
+                        bottomAdEnabled = true
+                        binding.adContainerVideoBottom.visibility = View.VISIBLE
+                        binding.webviewVideoBottomAd.loadDataWithBaseURL(
+                            null,
+                            bottomAd.content,
+                            "text/html",
+                            "UTF-8",
+                            null
+                        )
+                        Log.d(TAG, "底部广告已加载")
+                    } else {
+                        bottomAdEnabled = false
                         binding.adContainerVideoBottom.visibility = View.GONE
+                        Log.d(TAG, "底部广告未启用或内容为空")
                     }
+                }.onFailure {
+                    Log.w(TAG, "广告配置加载失败：${it.message}")
+                    // 默认隐藏广告位
+                    binding.adContainerVideoBottom.visibility = View.GONE
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "广告配置加载异常", e)
@@ -411,7 +372,7 @@ class VideoPlayerActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     private fun playNextEpisode() {
         if (playSources.isNotEmpty() && currentSourceIndex < playSources.size) {
             val source = playSources[currentSourceIndex]
@@ -424,19 +385,19 @@ class VideoPlayerActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     private fun showExitConfirmDialog() {
         AlertDialog.Builder(this)
             .setTitle("返回详情")
             .setMessage("是否返回视频详情页？")
-            .setPositiveButton("返回") { _, _ -> 
+            .setPositiveButton("返回") { _, _ ->
                 setResult(RESULT_OK)
                 finish()
             }
             .setNegativeButton("继续观看", null)
             .show()
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
         try {
@@ -446,7 +407,7 @@ class VideoPlayerActivity : AppCompatActivity() {
             Log.e(TAG, "Error releasing player", e)
         }
     }
-    
+
     companion object {
         const val EXTRA_VIDEO_ID = "extra_video_id"
         const val EXTRA_VIDEO_URL = "extra_video_url"
