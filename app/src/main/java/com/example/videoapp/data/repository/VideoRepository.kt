@@ -96,10 +96,11 @@ class VideoRepository {
     /**
      * 获取所有频道的视频详情（聚合模式）
      * 同步 Web 端 IndexController::getVideoDetailAllChannels 逻辑
+     * @param wd 视频名称：跨渠道按名称匹配，避免各渠道 ID 体系不同导致源错配
      */
-    suspend fun getVideoDetailAllChannels(ids: String): Result<Video?> {
+    suspend fun getVideoDetailAllChannels(ids: String, wd: String = ""): Result<Video?> {
         return try {
-            val response = api.getVideoDetailAllChannels(ids = ids)
+            val response = api.getVideoDetailAllChannels(ids = ids, wd = wd)
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
                 if (body.code == 1) {

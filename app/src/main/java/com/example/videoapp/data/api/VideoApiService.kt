@@ -57,10 +57,12 @@ interface VideoApiService {
     /**
      * 获取视频详情（所有频道聚合）
      * Web 端对应接口：IndexController::getVideoDetailAllChannels
+     * wd 为视频名称，用于跨渠道按名称匹配（各渠道 ID 体系独立，避免源错配）
      */
     @GET("/api/video/detail-all")
     suspend fun getVideoDetailAllChannels(
-        @Query("ids") ids: String
+        @Query("ids") ids: String,
+        @Query("wd") wd: String = ""
     ): Response<VideoResponse>
     
     /**

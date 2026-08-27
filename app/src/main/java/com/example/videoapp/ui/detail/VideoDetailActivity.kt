@@ -9,6 +9,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.videoapp.R
 import com.example.videoapp.data.model.Video
 import com.example.videoapp.data.repository.VideoRepository
 import com.example.videoapp.databinding.ActivityVideoDetailBinding
@@ -107,7 +108,14 @@ class VideoDetailActivity : AppCompatActivity() {
             binding.textViewAppBarTitle.text = video.vod_name
             binding.textViewVideoYear.text = "年份：${video.vod_year ?: "未知"}"
             binding.textViewVideoArea.text = "地区：${video.vod_area ?: "未知"}"
-            binding.textViewVideoType.text = "类型：${video.vod_class ?: "未知"}"
+            binding.textViewVideoType.text = "类型：${video.vod_class ?: "未知"}"                // 加载海报
+                if (!video.vod_pic.isNullOrEmpty()) {
+                    com.bumptech.glide.Glide.with(this@VideoDetailActivity)
+                        .load(video.vod_pic)
+                        .placeholder(R.drawable.placeholder_image)
+                        .error(R.drawable.placeholder_image)
+                        .into(binding.imageViewPoster)
+                }
 
             var content = video.vod_content ?: "暂无简介"
             if (content.length > 200) {
@@ -143,7 +151,7 @@ class VideoDetailActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            val result = VideoRepository().getVideoDetailAllChannels(videoId)
+            val result = VideoRepository().getVideoDetailAllChannels(videoId, videoTitle)
             result.onSuccess { video ->
                 if (video == null) {
                     Toast.makeText(this@VideoDetailActivity, "加载视频详情失败", Toast.LENGTH_SHORT).show()
@@ -157,6 +165,15 @@ class VideoDetailActivity : AppCompatActivity() {
                 binding.textViewVideoYear.text = "年份：${video.vod_year ?: "未知"}"
                 binding.textViewVideoArea.text = "地区：${video.vod_area ?: "未知"}"
                 binding.textViewVideoType.text = "类型：${video.vod_class ?: "未知"}"
+
+                // 加载海报
+                if (!video.vod_pic.isNullOrEmpty()) {
+                    com.bumptech.glide.Glide.with(this@VideoDetailActivity)
+                        .load(video.vod_pic)
+                        .placeholder(R.drawable.placeholder_image)
+                        .error(R.drawable.placeholder_image)
+                        .into(binding.imageViewPoster)
+                }
 
                 var content = video.vod_content ?: "暂无简介"
                 if (content.length > 200) {
