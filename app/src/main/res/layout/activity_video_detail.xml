@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:background="@color/bg_dark">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,12 +13,12 @@
         <!-- 顶部栏 -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:background="#FFFFFF"
-            android:elevation="4dp"
+            android:layout_height="52dp"
+            android:background="@color/bg_card"
+            android:elevation="8dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingStart="16dp"
+            android:paddingStart="8dp"
             android:paddingEnd="16dp">
 
             <Button
@@ -29,8 +29,8 @@
                 android:minWidth="48dp"
                 android:minHeight="48dp"
                 android:text="←"
-                android:textColor="#333333"
-                android:textSize="20sp" />
+                android:textColor="@color/text_primary"
+                android:textSize="22sp" />
 
             <TextView
                 android:id="@+id/textViewAppBarTitle"
@@ -42,8 +42,8 @@
                 android:maxLines="1"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
-                android:textColor="#333333"
-                android:textSize="18sp"
+                android:textColor="@color/text_primary"
+                android:textSize="17sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
@@ -51,74 +51,117 @@
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:overScrollMode="never">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:paddingBottom="24dp">
 
-                <!-- 视频信息 -->
+                <!-- 头部：海报 + 基本信息 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="#FFFFFF"
-                    android:elevation="2dp"
+                    android:background="@color/bg_card"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <!-- 海报 -->
+                    <ImageView
+                        android:id="@+id/imageViewPoster"
+                        android:layout_width="110dp"
+                        android:layout_height="155dp"
+                        android:background="@drawable/placeholder_image"
+                        android:scaleType="centerCrop"
+                        android:contentDescription="海报" />
+
+                    <!-- 右侧信息 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="14dp"
+                        android:orientation="vertical"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/textViewVideoTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_primary"
+                            android:textSize="17sp"
+                            android:textStyle="bold"
+                            android:maxLines="2"
+                            android:ellipsize="end" />
+
+                        <TextView
+                            android:id="@+id/textViewVideoYear"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/textViewVideoType"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/textViewVideoArea"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp" />
+
+                        <!-- 大播放按钮 -->
+                        <Button
+                            android:id="@+id/buttonPlay"
+                            android:layout_width="match_parent"
+                            android:layout_height="44dp"
+                            android:layout_marginTop="12dp"
+                            android:background="@drawable/play_button_bg"
+                            android:text="▶  立即播放"
+                            android:textColor="#FFFFFF"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            android:visibility="gone" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- 简介 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@color/bg_card"
                     android:orientation="vertical"
                     android:padding="16dp">
 
                     <TextView
-                        android:id="@+id/textViewVideoTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textColor="#333333"
-                        android:textSize="18sp"
+                        android:text="简介"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/textViewVideoYear"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:textColor="#666666"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/textViewVideoType"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:textColor="#666666"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/textViewVideoArea"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:textColor="#666666"
-                        android:textSize="14sp" />
 
                     <TextView
                         android:id="@+id/textViewVideoDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="8dp"
                         android:lineSpacingExtra="4dp"
-                        android:textColor="#666666"
-                        android:textSize="14sp" />
-
-                    <Button
-                        android:id="@+id/buttonPlay"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="16dp"
-                        android:background="@drawable/play_button_bg"
-                        android:text="播放"
-                        android:textColor="#FFFFFF"
-                        android:textSize="16sp"
-                        android:visibility="gone" />
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
 
                 </LinearLayout>
 
@@ -127,9 +170,8 @@
                     android:id="@+id/layoutSources"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:background="#FFFFFF"
-                    android:elevation="2dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@color/bg_card"
                     android:orientation="vertical"
                     android:padding="16dp"
                     android:visibility="gone">
@@ -138,15 +180,16 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="播放源"
-                        android:textColor="#333333"
-                        android:textSize="16sp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/recyclerViewSources"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp" />
+                        android:layout_marginTop="8dp"
+                        android:nestedScrollingEnabled="false" />
 
                 </LinearLayout>
 
@@ -155,9 +198,8 @@
                     android:id="@+id/layoutEpisodes"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:background="#FFFFFF"
-                    android:elevation="2dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@color/bg_card"
                     android:orientation="vertical"
                     android:padding="16dp"
                     android:visibility="gone">
@@ -166,15 +208,16 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="选集"
-                        android:textColor="#333333"
-                        android:textSize="16sp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/recyclerViewEpisodes"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp" />
+                        android:layout_marginTop="8dp"
+                        android:nestedScrollingEnabled="false" />
 
                 </LinearLayout>
 
@@ -189,15 +232,15 @@
         android:id="@+id/popupSource"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#CC000000"
+        android:background="@color/overlay_dim"
         android:gravity="center"
         android:orientation="vertical"
         android:visibility="gone">
 
         <LinearLayout
-            android:layout_width="300dp"
+            android:layout_width="320dp"
             android:layout_height="wrap_content"
-            android:background="#1A1A1A"
+            android:background="@color/bg_card"
             android:orientation="vertical"
             android:padding="16dp">
 
@@ -205,7 +248,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="选择播放源"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -213,17 +256,18 @@
                 android:id="@+id/recyclerViewPopupSources"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp" />
+                android:layout_marginTop="16dp"
+                android:maxHeight="420dp" />
 
             <Button
                 android:id="@+id/buttonClosePopupSource"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="44dp"
                 android:layout_marginTop="16dp"
                 android:background="@drawable/bg_button_primary"
                 android:text="关闭"
                 android:textColor="#FFFFFF"
-                android:textSize="16sp" />
+                android:textSize="15sp" />
 
         </LinearLayout>
 

@@ -15,7 +15,25 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:show_buffering="always"
-        app:use_controller="true" />
+        app:use_controller="false" />
+
+    <!-- 手势指示层（快进/亮度/音量） -->
+    <TextView
+        android:id="@+id/text_view_gesture_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#99000000"
+        android:paddingStart="16dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- 顶部控制栏 -->
     <LinearLayout

@@ -61,14 +61,34 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        binding.textViewKeyword.text = "搜索：$searchKeyword"
-        
         setupRecyclerView()
         setupChannelFilter()
+        setupSearchInput()
         observeViewModel()
         
         if (searchKeyword.isNotEmpty()) {
+            binding.editTextSearch.setText(searchKeyword)
+            binding.textViewKeyword.text = "搜索：$searchKeyword"
             viewModel.searchVideos(searchKeyword)
+        } else {
+            binding.textViewKeyword.text = "输入关键词开始搜索"
+        }
+    }
+    
+    private fun setupSearchInput() {
+        binding.editTextSearch.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
+                val keyword = binding.editTextSearch.text.toString().trim()
+                if (keyword.isNotEmpty()) {
+                    searchKeyword = keyword
+                    binding.textViewKeyword.text = "搜索：$keyword"
+                    binding.layoutChannelFilter.visibility = View.GONE
+                    viewModel.searchVideos(keyword)
+                }
+                true
+            } else {
+                false
+            }
         }
     }
     

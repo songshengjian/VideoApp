@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#f3f8f4">
+    android:background="@color/bg_dark">
 
     <!-- 搜索信息栏 -->
     <LinearLayout
@@ -11,16 +11,33 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="12dp"
-        android:background="@android:color/white"
-        android:elevation="2dp">
+        android:background="@color/bg_card"
+        android:elevation="4dp">
+
+        <!-- 页内搜索框 -->
+        <EditText
+            android:id="@+id/edit_text_search"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:hint="输入关键词搜索影视..."
+            android:textColorHint="@color/text_hint"
+            android:textColor="@color/text_primary"
+            android:background="@drawable/search_background"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:textSize="14sp"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:maxLines="1" />
 
         <TextView
             android:id="@+id/text_view_keyword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="#333333" />
+            android:textColor="@color/text_primary" />
 
         <!-- 渠道筛选区域 -->
         <LinearLayout
@@ -62,7 +79,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="12sp"
-            android:textColor="#999999"
+            android:textColor="@color/text_hint"
             android:layout_marginTop="4dp" />
     </LinearLayout>
 
@@ -82,6 +99,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:indeterminateTint="@color/primary"
             android:visibility="gone" />
     </FrameLayout>
 

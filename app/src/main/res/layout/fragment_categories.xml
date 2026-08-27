@@ -3,9 +3,29 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#f3f8f4">
+    android:background="@color/bg_dark">
 
-    <!-- 子类导航栏（横向滚动） -->
+    <!-- 大类导航（电影/剧集/综艺/动漫/短剧） -->
+    <HorizontalScrollView
+        android:id="@+id/parent_nav_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="4dp"
+        android:background="@color/bg_card">
+
+        <LinearLayout
+            android:id="@+id/parent_nav_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+
+    </HorizontalScrollView>
+
+    <!-- 子类导航（横向滚动） -->
     <HorizontalScrollView
         android:id="@+id/child_nav_scroll"
         android:layout_width="match_parent"
@@ -13,10 +33,9 @@
         android:scrollbars="none"
         android:paddingStart="12dp"
         android:paddingEnd="12dp"
-        android:paddingTop="8dp"
+        android:paddingTop="4dp"
         android:paddingBottom="8dp"
-        android:background="@color/white"
-        android:elevation="2dp">
+        android:background="@color/bg_card">
 
         <LinearLayout
             android:id="@+id/child_nav_container"
@@ -44,6 +63,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:indeterminateTint="@color/primary"
             android:visibility="gone" />
 
     </FrameLayout>

@@ -5,7 +5,10 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
+import android.view.WindowManager
 import android.widget.GridLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -24,6 +27,7 @@ import com.example.videoapp.R
 import com.example.videoapp.data.repository.VideoRepository
 import com.example.videoapp.databinding.ActivityVideoPlayerBinding
 import com.google.gson.Gson
+import kotlin.math.abs
 import kotlinx.coroutines.launch
 
 class VideoPlayerActivity : AppCompatActivity() {
@@ -44,6 +48,17 @@ class VideoPlayerActivity : AppCompatActivity() {
 
     // 广告相关
     private var bottomAdEnabled = false
+
+    // 手势相关
+    private var gestureDetector: GestureDetector? = null
+    private var startGestureX = 0f
+    private var startGestureY = 0f
+    private var gestureMode = 0 // 0=无 1=快进 2=亮度 3=音量
+    private var startBrightness = -1f
+    private var startVolume = -1f
+    private var lastHintText = ""
+    private val gestureHintHandler = Handler(Looper.getMainLooper())
+    private val hideGestureHintRunnable = Runnable { binding.textViewGestureHint.visibility = View.GONE }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,7 +109,7 @@ class VideoPlayerActivity : AppCompatActivity() {
             loadAdsConfig()
 
             if (videoId.isNotEmpty()) {
-                loadVideoDetail(videoId)
+                loadVideoDetail(videoId, videoTitle)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error in onCreate", e)
@@ -109,14 +124,8 @@ class VideoPlayerActivity : AppCompatActivity() {
             showExitConfirmDialog()
         }
 
-        // 点击屏幕切换控制栏
-        binding.playerView.setOnClickListener {
-            if (isControlsVisible) {
-                hideControlBars()
-            } else {
-                showControlBars()
-            }
-        }
+        // 手势：双击播放/暂停，单击切换控制栏，横滑快进，竖滑亮度/音量
+        setupGestures()
 
         // 播放源选择
         binding.buttonSelectSource.setOnClickListener { showSourcePopup() }
@@ -134,6 +143,138 @@ class VideoPlayerActivity : AppCompatActivity() {
 
         // 倍速网格点击
         setupSpeedGrid()
+    }
+
+    /**
+     * 手势：双击播放/暂停、单击切换控制栏、横向拖动快进快退、竖向拖动亮度/音量
+     */
+    private fun setupGestures() {
+        gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                if (isControlsVisible) {
+                    hideControlBars()
+                } else {
+                    showControlBars()
+                }
+                return true
+            }
+
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                togglePlayPause()
+                return true
+            }
+
+            override fun onDown(e: MotionEvent): Boolean {
+                startGestureX = e.x
+                startGestureY = e.y
+                gestureMode = 0
+                return true
+            }
+
+            override fun onScroll(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                distanceX: Float,
+                distanceY: Float
+            ): Boolean {
+                if (e1 == null) return false
+                val dx = e2.x - e1.x
+                val dy = e2.y - e1.y
+
+                // 判定手势模式（仅在开始时判定一次）
+                if (gestureMode == 0) {
+                    if (abs(dx) > abs(dy) && abs(dx) > 30f) {
+                        gestureMode = 1 // 横向快进
+                    } else if (abs(dy) > abs(dx) && abs(dy) > 30f) {
+                        // 竖向：左侧亮度，右侧音量
+                        gestureMode = if (e1.x < binding.playerView.width / 2f) 2 else 3
+                    }
+                }
+
+                when (gestureMode) {
+                    1 -> handleSeekGesture(dx)
+                    2 -> handleBrightnessGesture(dy)
+                    3 -> handleVolumeGesture(dy)
+                }
+                return true
+            }
+        })
+
+        binding.playerView.setOnTouchListener { _, event ->
+            gestureDetector?.onTouchEvent(event)
+            true
+        }
+    }
+
+    private fun togglePlayPause() {
+        val player = exoPlayer ?: return
+        if (player.isPlaying) {
+            player.pause()
+            showGestureHint("⏸ 已暂停")
+        } else {
+            player.play()
+            showGestureHint("▶ 继续播放")
+        }
+    }
+
+    private fun handleSeekGesture(dx: Float) {
+        val player = exoPlayer ?: return
+        val duration = player.duration
+        if (duration <= 0) return
+        // 全宽拖动对应整个时长
+        val seekDelta = (dx / binding.playerView.width) * duration
+        val target = (player.currentPosition + seekDelta).toLong().coerceIn(0, duration)
+        player.seekTo(target)
+        showGestureHint("⏩ ${formatTime(target)} / ${formatTime(duration)}")
+    }
+
+    private fun handleBrightnessGesture(dy: Float) {
+        if (startBrightness < 0) {
+            startBrightness = window.attributes.screenBrightness
+            if (startBrightness < 0) startBrightness = 0.5f
+        }
+        val delta = -dy / 800f
+        val newBrightness = (startBrightness + delta).coerceIn(0.05f, 1f)
+        val lp = window.attributes
+        lp.screenBrightness = newBrightness
+        window.attributes = lp
+        showGestureHint("☀ 亮度 ${(newBrightness * 100).toInt()}%")
+    }
+
+    private fun handleVolumeGesture(dy: Float) {
+        val audioManager = getSystemService(AUDIO_SERVICE) as android.media.AudioManager
+        if (startVolume < 0) {
+            startVolume = audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC).toFloat()
+        }
+        val maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC).toFloat()
+        val delta = -dy / 800f
+        val newVolume = (startVolume + delta * maxVolume).coerceIn(0f, maxVolume)
+        audioManager.setStreamVolume(
+            android.media.AudioManager.STREAM_MUSIC,
+            newVolume.toInt(),
+            0
+        )
+        showGestureHint("🔊 音量 ${(newVolume / maxVolume * 100).toInt()}%")
+    }
+
+    private fun showGestureHint(text: String) {
+        lastHintText = text
+        binding.textViewGestureHint.text = text
+        binding.textViewGestureHint.visibility = View.VISIBLE
+        gestureHintHandler.removeCallbacks(hideGestureHintRunnable)
+        gestureHintHandler.postDelayed(hideGestureHintRunnable, 1200L)
+    }
+
+    private fun formatTime(ms: Long): String {
+        val totalSec = ms / 1000
+        val h = totalSec / 3600
+        val m = (totalSec % 3600) / 60
+        val s = totalSec % 60
+        return if (h > 0) {
+            String.format("%d:%02d:%02d", h, m, s)
+        } else {
+            String.format("%02d:%02d", m, s)
+        }
     }
 
     private fun showControlBars() {
@@ -259,7 +400,7 @@ class VideoPlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadVideoDetail(videoId: String) {
+    private fun loadVideoDetail(videoId: String, videoName: String = "") {
         // 详情页已传入播放源时直接使用，不再请求
         if (playSources.isNotEmpty()) {
             updateEpisodeInfo()
@@ -268,7 +409,8 @@ class VideoPlayerActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             // 走全渠道并发详情，比单渠道接口更快且源更多
-            VideoRepository().getVideoDetailAllChannels(videoId)
+            // 传视频名称：跨渠道按名称匹配，避免各渠道 ID 不同导致源内容错配
+            VideoRepository().getVideoDetailAllChannels(videoId, videoName)
                 .onSuccess { video ->
                     if (video != null) {
                         playSources = if (video.play_sources.isNotEmpty()) {
@@ -442,6 +584,8 @@ class VideoPlayerActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         try {
+            gestureHintHandler.removeCallbacks(hideGestureHintRunnable)
+            handler.removeCallbacks(hideRunnable)
             exoPlayer?.release()
             exoPlayer = null
         } catch (e: Exception) {

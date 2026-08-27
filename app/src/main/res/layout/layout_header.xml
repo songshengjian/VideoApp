@@ -3,20 +3,19 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@color/white"
-    android:elevation="4dp"
+    android:background="@color/bg_card"
+    android:elevation="8dp"
     android:paddingTop="8dp"
     android:paddingBottom="8dp">
 
-    <!-- 第一行：Logo + 搜索 -->
+    <!-- Logo + 搜索 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="8dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
         <!-- Logo -->
         <TextView
@@ -33,35 +32,20 @@
         <EditText
             android:id="@+id/edit_text_search"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:layout_weight="1"
             android:hint="搜索影视..."
+            android:textColorHint="@color/text_hint"
+            android:textColor="@color/text_primary"
             android:background="@drawable/search_background"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
             android:textSize="14sp"
             android:imeOptions="actionSearch"
             android:inputType="text"
-            android:maxLines="1" />
+            android:maxLines="1"
+            android:focusableInTouchMode="true" />
 
     </LinearLayout>
-
-    <!-- 分类导航栏（横向滚动） -->
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="none"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp">
-
-        <LinearLayout
-            android:id="@+id/nav_categories_container"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" />
-
-    </HorizontalScrollView>
 
 </LinearLayout>
