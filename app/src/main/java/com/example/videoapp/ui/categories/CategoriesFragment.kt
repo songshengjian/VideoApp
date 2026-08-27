@@ -144,28 +144,6 @@ class CategoriesFragment : Fragment() {
         }
     }
     
-    /**
-     * 解析第一个剧集的播放 URL
-     */
-    private fun parseFirstEpisodeUrl(playUrl: String): String {
-        if (playUrl.isEmpty()) {
-            return ""
-        }
-        try {
-            val episodes = playUrl.split("#")
-            if (episodes.isNotEmpty()) {
-                val firstEpisode = episodes[0]
-                val parts = firstEpisode.split("$")
-                if (parts.size >= 2) {
-                    return parts[1]
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error parsing play URL", e)
-        }
-        return ""
-    }
-    
     private fun observeViewModel() {
         // 观察分类列表数据，构建子导航
         viewModel.hierarchicalCategories.observe(viewLifecycleOwner) { hierarchicalCats ->

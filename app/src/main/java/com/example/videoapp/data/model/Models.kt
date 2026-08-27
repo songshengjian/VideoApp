@@ -75,7 +75,10 @@ data class Video(
     val vod_rel_art: String = "",
     val vod_content_status: String = "",
     @SerializedName("play_sources") val play_sources: List<PlaySourceData> = emptyList(),
-    @SerializedName("debug_channels") val debug_channels: Map<String, Int> = emptyMap()
+    @SerializedName("debug_channels") val debug_channels: Map<String, Int> = emptyMap(),
+    // 搜索聚合时 Web 端标记的来源渠道（IndexController::searchVideos）
+    @SerializedName("_channel_name") val _channel_name: String = "",
+    @SerializedName("_channel_id") val _channel_id: Int = 0
 )
 
 data class PlaySourceData(
@@ -137,30 +140,6 @@ data class CategoryResponse(
     val msg: String,
     @SerializedName("class") val class_: List<Category> = emptyList(),
     val tree: List<Category> = emptyList()
-)
-
-data class User(
-    val user_id: Int,
-    val user_name: String,
-    val user_email: String = "",
-    val user_vip: Int = 0,
-    val user_points: Int = 0,
-    val user_login_time: Long = 0L,
-    val user_login_ip: String = "",
-    val user_end_time: Long = 0L,
-    val user_instant: Int = 0
-)
-
-data class LoginRequest(
-    val user_name: String,
-    val user_pwd: String
-)
-
-data class RegisterRequest(
-    val user_name: String,
-    val user_pwd: String,
-    val user_email: String = "",
-    val user_phone: String = ""
 )
 
 data class VideoSearchResponse(

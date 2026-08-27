@@ -69,31 +69,4 @@ interface VideoApiService {
      */
     @GET("/api/ads")
     suspend fun getAds(): Response<AdsResponse>
-    
-    @POST("/api/user/login")
-    @FormUrlEncoded
-    suspend fun login(
-        @Field("user_name") username: String,
-        @Field("user_pwd") password: String
-    ): Response<LoginResponse>
-    
-    @POST("/api/user/register")
-    @FormUrlEncoded
-    suspend fun register(
-        @Field("user_name") username: String,
-        @Field("user_pwd") password: String,
-        @Field("user_email") email: String = ""
-    ): Response<LoginResponse>
 }
-
-data class LoginResponse(
-    val code: Int,
-    val msg: String,
-    val data: LoginData?
-)
-
-data class LoginData(
-    val user_id: Int,
-    val user_name: String,
-    val token: String
-)

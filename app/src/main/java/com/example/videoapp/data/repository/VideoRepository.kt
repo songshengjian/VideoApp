@@ -128,37 +128,4 @@ class VideoRepository {
         }
     }
     
-    suspend fun login(username: String, password: String): Result<com.example.videoapp.data.model.User> {
-        return try {
-            val response = api.login(username, password)
-            if (response.isSuccessful && response.body() != null && response.body()!!.code == 1) {
-                val userData = response.body()!!.data!!
-                Result.success(com.example.videoapp.data.model.User(
-                    user_id = userData.user_id,
-                    user_name = userData.user_name
-                ))
-            } else {
-                Result.failure(Exception(response.body()?.msg ?: "登录失败"))
-            }
-        } catch (e: Exception) {
-            Result.failure(handleNetworkError(e))
-        }
-    }
-    
-    suspend fun register(username: String, password: String, email: String = ""): Result<com.example.videoapp.data.model.User> {
-        return try {
-            val response = api.register(username, password, email)
-            if (response.isSuccessful && response.body() != null && response.body()!!.code == 1) {
-                val userData = response.body()!!.data!!
-                Result.success(com.example.videoapp.data.model.User(
-                    user_id = userData.user_id,
-                    user_name = userData.user_name
-                ))
-            } else {
-                Result.failure(Exception(response.body()?.msg ?: "注册失败"))
-            }
-        } catch (e: Exception) {
-            Result.failure(handleNetworkError(e))
-        }
-    }
 }

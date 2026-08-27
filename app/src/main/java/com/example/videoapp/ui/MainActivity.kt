@@ -30,11 +30,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         
         try {
-            Log.d(TAG, "Activity started")
             binding = ActivityMainBinding.inflate(layoutInflater)
-            Log.d(TAG, "Binding inflated")
             setContentView(binding.root)
-            Log.d(TAG, "Content view set")
             
             // 获取 Header Binding
             headerBinding = binding.header
@@ -43,15 +40,11 @@ class MainActivity : AppCompatActivity() {
             loadNavCategories()
             
             setupHeader()
-            Log.d(TAG, "Header setup complete")
             
             // 默认显示首页
             if (savedInstanceState == null) {
                 switchFragment(HomeFragment(), 0)
             }
-            Log.d(TAG, "Navigation setup complete")
-            
-            Toast.makeText(this, "畅观启动成功！", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Log.e(TAG, "Error in onCreate", e)
             Toast.makeText(this, "启动失败：${e.message}", Toast.LENGTH_LONG).show()
