@@ -2,6 +2,7 @@ package com.example.videoapp.ui.detail
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Html
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -117,11 +118,7 @@ class VideoDetailActivity : AppCompatActivity() {
                         .into(binding.imageViewPoster)
                 }
 
-            var content = video.vod_content ?: "暂无简介"
-            if (content.length > 200) {
-                content = content.substring(0, 200) + "..."
-            }
-            binding.textViewVideoDesc.text = "简介：$content"
+            binding.textViewVideoDesc.text = formatDescription(video.vod_content)
 
             // 使用搜索结果中的播放源数据（与 web 端一致：仅保留 M3U8 源）
             if (video.vod_play_from.isNotEmpty() && video.vod_play_url.isNotEmpty()) {
@@ -175,11 +172,7 @@ class VideoDetailActivity : AppCompatActivity() {
                         .into(binding.imageViewPoster)
                 }
 
-                var content = video.vod_content ?: "暂无简介"
-                if (content.length > 200) {
-                    content = content.substring(0, 200) + "..."
-                }
-                binding.textViewVideoDesc.text = "简介：$content"
+                binding.textViewVideoDesc.text = formatDescription(video.vod_content)
 
                 // 使用 play_sources 字段（与 web 端播放页一致：仅保留 M3U8 源）
                 if (video.play_sources.isNotEmpty()) {
@@ -207,6 +200,23 @@ class VideoDetailActivity : AppCompatActivity() {
                 finish()
             }
         }
+    }
+
+    private fun formatDescription(rawContent: String?): String {
+        val raw = rawContent?.trim().orEmpty()
+        if (raw.isEmpty()) return "简介：暂无简介"
+
+        val plainText = Html.fromHtml(raw, Html.FROM_HTML_MODE_LEGACY)
+            .toString()
+            .replace(Regex("[\\t\\x0B\\f\\r]+"), " ")
+            .replace(Regex("\\n{3,}"), "\\n\\n")
+            .trim()
+        val content = if (plainText.length > 200) {
+            plainText.substring(0, 200).trimEnd() + "..."
+        } else {
+            plainText
+        }
+        return "简介：$content"
     }
 
     private fun setupPlaySources() {
