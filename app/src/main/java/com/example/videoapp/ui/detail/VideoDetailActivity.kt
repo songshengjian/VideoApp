@@ -18,6 +18,8 @@ import com.example.videoapp.ui.player.PlaySourceParser
 import com.example.videoapp.ui.player.VideoPlayerActivity
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -113,7 +115,7 @@ class VideoDetailActivity : AppCompatActivity() {
             }
             binding.textViewVideoDesc.text = "简介：$content"
 
-            // 使用搜索结果中的播放源数据
+            // 使用搜索结果中的播放源数据（与 web 端一致：仅保留 M3U8 源）
             if (video.vod_play_from.isNotEmpty() && video.vod_play_url.isNotEmpty()) {
                 playSources = PlaySourceParser.parse(video.vod_play_from, video.vod_play_url).toMutableList()
                 Log.d(TAG, "使用搜索数据解析播放源：${playSources.size} 个")
@@ -121,7 +123,12 @@ class VideoDetailActivity : AppCompatActivity() {
 
             Toast.makeText(this, "播放源：${playSources.size}个", Toast.LENGTH_LONG).show()
 
-            setupPlaySources()
+            // 搜索数据中没有可用播放源时，回退到全渠道聚合详情
+            if (playSources.isEmpty()) {
+                loadVideoDetailFromApi()
+            } else {
+                setupPlaySources()
+            }
         } catch (e: Exception) {
             Log.e(TAG, "解析搜索数据失败", e)
             loadVideoDetailFromApi()
@@ -157,9 +164,9 @@ class VideoDetailActivity : AppCompatActivity() {
                 }
                 binding.textViewVideoDesc.text = "简介：$content"
 
-                // 使用 play_sources 字段
+                // 使用 play_sources 字段（与 web 端播放页一致：仅保留 M3U8 源）
                 if (video.play_sources.isNotEmpty()) {
-                    playSources = video.play_sources.map { sourceData ->
+                    playSources = PlaySourceParser.filterM3U8(video.play_sources.map { sourceData ->
                         PlaySource(
                             name = "${sourceData.channel} - ${sourceData.name}",
                             episodes = sourceData.episodes.map { ep ->
@@ -167,7 +174,7 @@ class VideoDetailActivity : AppCompatActivity() {
                             },
                             status = 0
                         )
-                    }.toMutableList()
+                    }).toMutableList()
                     Log.d(TAG, "使用 play_sources: ${playSources.size} 个播放源")
                 } else {
                     playSources = PlaySourceParser.parse(video.vod_play_from, video.vod_play_url).toMutableList()
@@ -260,18 +267,21 @@ class VideoDetailActivity : AppCompatActivity() {
 
     private fun checkSourcesStatus() {
         lifecycleScope.launch {
-            for (i in playSources.indices) {
-                val source = playSources[i]
-                if (source.episodes.isNotEmpty()) {
-                    val firstUrl = source.episodes.first().url
-                    val isValid = checkUrlValid(firstUrl)
-                    playSources[i] = source.copy(status = if (isValid) 1 else 2)
-                } else {
-                    playSources[i] = source.copy(status = 2)
+            // 并发探测所有源（原先串行逐个 HEAD 检查，弱网下会卡很久）
+            val statuses = playSources.map { source ->
+                async {
+                    if (source.episodes.isNotEmpty()) {
+                        val firstUrl = source.episodes.first().url
+                        if (checkUrlValid(firstUrl)) 1 else 2
+                    } else {
+                        2
+                    }
                 }
-                withContext(Dispatchers.Main) {
-                    sourceAdapter?.notifyItemChanged(i)
-                }
+            }.awaitAll()
+
+            statuses.forEachIndexed { i, status ->
+                playSources[i] = playSources[i].copy(status = status)
+                sourceAdapter?.notifyItemChanged(i)
             }
         }
     }
@@ -313,6 +323,8 @@ class VideoDetailActivity : AppCompatActivity() {
         intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_ID, videoId)
         intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_TITLE, videoTitle)
         intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, episode.url)
+        // 与 web 端一致：把当前全部播放源传给播放器，播放器直接用传入数据，不再重复请求
+        intent.putExtra(VideoPlayerActivity.EXTRA_PLAY_SOURCES, Gson().toJson(playSources))
         startActivityForResult(intent, REQUEST_CODE_PLAY)
     }
 

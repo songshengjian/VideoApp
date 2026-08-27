@@ -23,12 +23,27 @@ class HomeViewModel : ViewModel() {
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
     
+    // 进程级内存缓存：切换 Tab 会重建 ViewModel，用 companion 持有可跨 Tab 复用，避免每次重复请求 5 个分类
+    private companion object {
+        const val CACHE_TTL_MS = 10 * 60 * 1000L // 10 分钟
+        var cachedSections: List<HomeSection>? = null
+        var cacheLoadedAt: Long = 0
+    }
+
     /**
      * 同步 Web 端首页推荐逻辑
      * 从分类中获取推荐内容，并构建分区展示
      */
-    fun loadHomeVideos() {
+    fun loadHomeVideos(forceRefresh: Boolean = false) {
         viewModelScope.launch {
+            // 缓存未过期且非强制刷新时直接复用，避免重复请求
+            val now = System.currentTimeMillis()
+            if (!forceRefresh && cachedSections != null && now - cacheLoadedAt < CACHE_TTL_MS) {
+                _sections.value = cachedSections
+                _isLoading.value = false
+                return@launch
+            }
+
             _isLoading.value = true
             _error.value = null
 
@@ -60,6 +75,8 @@ class HomeViewModel : ViewModel() {
             if (sectionList.isEmpty()) {
                 _error.value = "加载首页数据失败"
             } else {
+                cachedSections = sectionList
+                cacheLoadedAt = System.currentTimeMillis()
                 _sections.value = sectionList
             }
 

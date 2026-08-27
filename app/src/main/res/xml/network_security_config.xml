@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    播放源来自各渠道 CDN（可能是 http://），因此全局允许明文；
+    仅对自有 API 域名强制 HTTPS，保证接口链路安全。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">videoweb-jncd.onrender.com</domain>
+    </domain-config>
+</network-security-config>

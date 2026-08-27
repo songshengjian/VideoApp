@@ -33,7 +33,5 @@ class VideoApplication : Application() {
                 Log.e("VideoApp", "Failed to save crash log", e)
             }
         }
-        
-        Log.d("VideoApp", "Application started")
     }
 }

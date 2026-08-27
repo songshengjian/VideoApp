@@ -61,8 +61,6 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        Log.d(TAG, "Fragment onViewCreated, keyword: $searchKeyword")
-        
         binding.textViewKeyword.text = "搜索：$searchKeyword"
         
         setupRecyclerView()
@@ -78,8 +76,6 @@ class SearchFragment : Fragment() {
         binding.recyclerViewSearch.layoutManager = GridLayoutManager(requireContext(), 2)
         binding.recyclerViewSearch.adapter = VideoAdapter { video ->
             try {
-                Log.d(TAG, "Video clicked: ${video.vod_name}")
-                
                 // 直接传递完整视频数据，包含播放源
                 val intent = android.content.Intent(requireContext(), VideoDetailActivity::class.java)
                 intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
@@ -152,16 +148,11 @@ class SearchFragment : Fragment() {
         val filtered = if (currentChannel == "全部") {
             allVideos
         } else {
-            allVideos.filter { 
-                val channelName = it.vod_play_from?.split("$$$")?.firstOrNull()?.trim()
-                channelName?.contains(currentChannel) == true 
-            }
+            allVideos.filter { it._channel_name == currentChannel }
         }
         
         (binding.recyclerViewSearch.adapter as? VideoAdapter)?.submitList(filtered)
         binding.textViewResultCount.text = "共找到 ${filtered.size} 个结果（${currentChannel}）"
-        
-        Log.d(TAG, "筛选：$currentChannel, 结果：${filtered.size} 个")
     }
     
     private fun observeViewModel() {
@@ -170,11 +161,11 @@ class SearchFragment : Fragment() {
                 allVideos = it
                 filterVideos()
                 
-                // 显示搜索渠道信息
+                // 显示搜索渠道信息（使用 Web 端返回的真实渠道归属）
                 if (it.isNotEmpty()) {
-                    val channels = it.mapNotNull { v -> 
-                        v.vod_play_from?.split("$$$")?.firstOrNull()?.trim() 
-                    }.distinct()
+                    val channels = it.mapNotNull { v -> v._channel_name }
+                        .filter { it.isNotEmpty() }
+                        .distinct()
                     
                     if (channels.isNotEmpty()) {
                         searchedChannels.clear()

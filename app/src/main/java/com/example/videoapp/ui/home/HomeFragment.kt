@@ -23,7 +23,6 @@ class HomeFragment : Fragment() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(TAG, "Fragment onCreate")
     }
     
     override fun onCreateView(
@@ -31,10 +30,8 @@ class HomeFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        Log.d(TAG, "Fragment onCreateView")
         try {
             _binding = FragmentHomeBinding.inflate(inflater, container, false)
-            Log.d(TAG, "Binding inflated successfully")
             return binding.root
         } catch (e: Exception) {
             Log.e(TAG, "Error in onCreateView", e)
@@ -45,17 +42,13 @@ class HomeFragment : Fragment() {
     
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.d(TAG, "Fragment onViewCreated")
         
         try {
             setupSectionAdapter()
-            Log.d(TAG, "Section adapter setup complete")
             
             observeViewModel()
-            Log.d(TAG, "ViewModel observation setup complete")
             
             viewModel.loadHomeVideos()
-            Log.d(TAG, "Loading home videos")
         } catch (e: Exception) {
             Log.e(TAG, "Error in onViewCreated", e)
             Toast.makeText(requireContext(), "加载失败：${e.message}", Toast.LENGTH_SHORT).show()
@@ -63,11 +56,8 @@ class HomeFragment : Fragment() {
     }
     
     private fun setupSectionAdapter() {
-        Log.d(TAG, "Setting up section adapter")
         sectionAdapter = HomeSectionAdapter { video ->
             try {
-                Log.d(TAG, "Video clicked: ${video.vod_name}")
-                
                 // 跳转到视频详情页面
                 val intent = android.content.Intent(requireContext(), VideoDetailActivity::class.java)
                 intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
@@ -82,21 +72,17 @@ class HomeFragment : Fragment() {
     }
     
     private fun observeViewModel() {
-        Log.d(TAG, "Observing ViewModel")
         viewModel.sections.observe(viewLifecycleOwner, Observer { sections ->
-            Log.d(TAG, "Sections received: ${sections?.size}")
             sections?.let {
                 renderSections(it)
             }
         })
         
         viewModel.isLoading.observe(viewLifecycleOwner, Observer { isLoading ->
-            Log.d(TAG, "Is loading: $isLoading")
             binding.progressBarHome.visibility = if (isLoading) View.VISIBLE else View.GONE
         })
         
         viewModel.error.observe(viewLifecycleOwner, Observer { error ->
-            Log.d(TAG, "Error observed: $error")
             error?.let {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
             }
@@ -133,8 +119,6 @@ class HomeFragment : Fragment() {
             
             val videoAdapter = HomeSectionVideoAdapter(section.videos) { video ->
                 try {
-                    Log.d(TAG, "Video clicked: ${video.vod_name}")
-                    
                     // 传递完整视频数据到详情页，包含所有渠道的播放源信息
                     val intent = android.content.Intent(requireContext(), VideoDetailActivity::class.java)
                     intent.putExtra(VideoDetailActivity.EXTRA_VIDEO_ID, video.vod_id.toString())
@@ -158,7 +142,6 @@ class HomeFragment : Fragment() {
     
     override fun onDestroyView() {
         super.onDestroyView()
-        Log.d(TAG, "Fragment onDestroyView")
         _binding = null
     }
 }

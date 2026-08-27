@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.videoapp.R
 import com.example.videoapp.data.repository.VideoRepository
 import com.example.videoapp.databinding.ActivityVideoPlayerBinding
+import com.google.gson.Gson
 import kotlinx.coroutines.launch
 
 class VideoPlayerActivity : AppCompatActivity() {
@@ -72,6 +73,19 @@ class VideoPlayerActivity : AppCompatActivity() {
             currentVideoUrl = intent.getStringExtra(EXTRA_VIDEO_URL) ?: ""
 
             binding.textViewVideoTitle.text = videoTitle
+
+            // 与 web 端一致：优先使用详情页传入的完整播放源列表，避免重复请求
+            val passedSourcesJson = intent.getStringExtra(EXTRA_PLAY_SOURCES)
+            if (!passedSourcesJson.isNullOrEmpty()) {
+                try {
+                    val passed = Gson().fromJson(passedSourcesJson, Array<PlaySource>::class.java)
+                    if (!passed.isNullOrEmpty()) {
+                        playSources = passed.toList()
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "解析传入播放源失败，回退到请求详情", e)
+                }
+            }
 
             setupUI()
             setupPlayer(currentVideoUrl)
@@ -246,11 +260,28 @@ class VideoPlayerActivity : AppCompatActivity() {
     }
 
     private fun loadVideoDetail(videoId: String) {
+        // 详情页已传入播放源时直接使用，不再请求
+        if (playSources.isNotEmpty()) {
+            updateEpisodeInfo()
+            return
+        }
+
         lifecycleScope.launch {
-            VideoRepository().getVideoDetail(videoId)
+            // 走全渠道并发详情，比单渠道接口更快且源更多
+            VideoRepository().getVideoDetailAllChannels(videoId)
                 .onSuccess { video ->
                     if (video != null) {
-                        playSources = PlaySourceParser.parse(video.vod_play_from, video.vod_play_url)
+                        playSources = if (video.play_sources.isNotEmpty()) {
+                            PlaySourceParser.filterM3U8(video.play_sources.map { sourceData ->
+                                PlaySource(
+                                    name = "${sourceData.channel} - ${sourceData.name}",
+                                    episodes = sourceData.episodes.map { ep -> Episode(ep.name, ep.url) },
+                                    status = 0
+                                )
+                            })
+                        } else {
+                            PlaySourceParser.parse(video.vod_play_from, video.vod_play_url)
+                        }
                         if (playSources.isNotEmpty()) {
                             updateEpisodeInfo()
                         }
@@ -264,9 +295,17 @@ class VideoPlayerActivity : AppCompatActivity() {
 
     private fun setupPlayer(videoUrl: String) {
         try {
+            // 使用 OkHttp 数据源（复用连接池，HLS 分片加载更快）；
+            // 减小起播缓冲：原先 minBuffer 15s 意味着要缓冲 15s 才进 READY，弱网下起播极慢
+            val dataSourceFactory = androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(
+                com.example.videoapp.data.api.ApiClient.playerOkHttpClient
+            )
             exoPlayer = ExoPlayer.Builder(this)
+                .setMediaSourceFactory(
+                    androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory)
+                )
                 .setLoadControl(DefaultLoadControl.Builder()
-                    .setBufferDurationsMs(15000, 50000, 3000, 3000)
+                    .setBufferDurationsMs(5000, 50000, 1500, 5000)
                     .build()
                 )
                 .build()
@@ -296,6 +335,8 @@ class VideoPlayerActivity : AppCompatActivity() {
                         else -> "播放失败：${error.message ?: "未知错误"}"
                     }
                     Toast.makeText(this@VideoPlayerActivity, errorMsg, Toast.LENGTH_LONG).show()
+                    // 与 web 端一致：播放失败时自动切换到下一个可用播放源
+                    tryAutoSwitchSource()
                 }
             })
 
@@ -408,9 +449,29 @@ class VideoPlayerActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * 播放失败时自动尝试下一个播放源（web 端 HLS 恢复逻辑的移动端等价实现）
+     */
+    private fun tryAutoSwitchSource() {
+        if (playSources.size <= currentSourceIndex + 1) return
+
+        currentSourceIndex++
+        currentEpisodeIndex = 0
+        val source = playSources[currentSourceIndex]
+        if (source.episodes.isEmpty()) {
+            tryAutoSwitchSource()
+            return
+        }
+
+        playVideo(source.episodes[0].url)
+        updateEpisodeInfo()
+        Toast.makeText(this, "当前播放源失败，已自动切换到：${source.name}", Toast.LENGTH_LONG).show()
+    }
+
     companion object {
         const val EXTRA_VIDEO_ID = "extra_video_id"
         const val EXTRA_VIDEO_URL = "extra_video_url"
         const val EXTRA_VIDEO_TITLE = "extra_video_title"
+        const val EXTRA_PLAY_SOURCES = "extra_play_sources"
     }
 }
